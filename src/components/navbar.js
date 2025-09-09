@@ -1,8 +1,9 @@
-// src/components/navbar.js (FINAL VERSION)
+// src/components/navbar.js (CORRECTED VERSION)
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ReactComponent as NovaChainLogo } from './NovaChainLogo.svg';
+// FIX 1: Changed the import to handle a PNG file
+import BitMartLogo from './BitMartLogo.png'; 
 import { useTranslation } from "react-i18next";
 
 const navItems = [
@@ -30,7 +31,8 @@ export default function NavBar() {
     >
       <div className="w-full flex items-center justify-between h-16 px-4 md:max-w-7xl md:mx-auto md:px-4">
         <Link to="/" className="flex items-center gap-4">
-          <NovaChainLogo className="h-10 w-auto drop-shadow-lg" />
+          {/* FIX 2: Changed the component to a standard <img> tag */}
+          <img src={BitMartLogo} alt="BitMart Logo" className="h-10 w-auto drop-shadow-lg" />
         </Link>
         
         {/* These nav links are now HIDDEN on mobile (hidden md:flex) */}

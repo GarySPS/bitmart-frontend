@@ -1,5 +1,5 @@
 import React from "react";
-import NovaChainLogo from "../components/NovaChainLogo.svg";
+import BitMartLogo from "../components/BitMartLogo.png";
 import { useTranslation } from "react-i18next";
 
 /* ---- Data (unchanged) ---- */
@@ -39,7 +39,7 @@ return (
   <div className="relative z-10 w-full max-w-6xl mx-auto px-4 md:px-6 pt-10 pb-24">
     {/* Header */}
     <div className="flex items-center gap-3 mb-6">
-      <img src={NovaChainLogo} alt="NovaChain" className="h-10 md:h-12 drop-shadow-xl" />
+      <img src={BitMartLogo} alt="BitMart" className="h-10 md:h-12 drop-shadow-xl" />
       <span className="px-3 py-1 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-white/10">
         {t("about_company_overview")}
       </span>

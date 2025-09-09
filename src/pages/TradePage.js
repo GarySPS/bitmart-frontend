@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import NovaChainLogo from "../components/NovaChainLogo.svg";
+import BitMartLogo from "../components/BitMartLogo.png";
 import { MAIN_API_BASE } from "../config";
 import Card from "../components/card";
 import Field from "../components/field";
@@ -388,7 +388,7 @@ const showToast = (text, type = "error") => {
                   {selectedCoin.symbol}/USDT
                 </span>
               </div>
-              <img src={NovaChainLogo} alt="NovaChain" className="h-9 w-auto ml-4" />
+              <img src={BitMartLogo} alt="BitMart" className="h-9 w-auto ml-4" />
             </div>
 
             {/* direction */}

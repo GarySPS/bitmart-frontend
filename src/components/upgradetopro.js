@@ -28,7 +28,7 @@ export default function UpgradeToPro() {
       </div>
       <div className="p-6">
         <div className="mb-2 text-h5 2xl:text-title-1s">
-          Trade smarter with NovaChain Pro
+          Trade smarter with BitMart Pro
         </div>
         <div className="-mr-1 text-body-2s text-theme-secondary">
           Automate trades based on user-defined criteria, using advanced algorithms.

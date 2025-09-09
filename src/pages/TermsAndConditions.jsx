@@ -6,7 +6,7 @@ export default function TermsAndConditions() {
     <div
       className="min-h-screen w-full text-gray-200 pb-24"
       style={{
-        background: 'url("/novachain.jpg") no-repeat center center fixed',
+        background: 'url("/bitmart.jpg") no-repeat center center fixed',
         backgroundSize: "cover",
       }}
     >
@@ -81,7 +81,7 @@ export default function TermsAndConditions() {
               <li>
                 <span className="font-semibold">(2)</span>&nbsp; In case of
                 accidental loss of funds, the platform will take full
-                responsibility. (Just take only Novachain mistake)
+                responsibility. (Just take only BitMart mistake)
               </li>
             </ul>
           </section>
@@ -145,7 +145,7 @@ export default function TermsAndConditions() {
               </li>
               <li>
                 <span className="font-semibold">(4)</span>&nbsp; The final
-                interpretation right belongs to <span className="font-semibold">Novachain LTD</span>.
+                interpretation right belongs to <span className="font-semibold">BitMart LTD</span>.
               </li>
             </ul>
           </section>

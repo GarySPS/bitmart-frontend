@@ -5,7 +5,7 @@ export default function GuidePage() {
     <div className="min-h-screen flex flex-col items-center py-10 px-2 bg-gradient-to-br from-[#181b25] via-[#191e29] to-[#181b25]">
       <div className="w-full max-w-lg bg-white/90 rounded-2xl shadow-xl p-6 md:p-10 flex flex-col items-center">
         <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center text-blue-700">
-          How to Install NovaChain on iPhone
+          How to Install BitMart on iPhone
         </h1>
         <ol className="w-full flex flex-col gap-8">
           {/* Step 1 */}
@@ -51,14 +51,14 @@ export default function GuidePage() {
             />
             <p className="text-center text-gray-600">
               Tap <span className="font-bold">Add</span> at the top right.  
-              NovaChain will appear on your home screen like an app!
+              BitMart will appear on your home screen like an app!
             </p>
           </li>
         </ol>
         <div className="mt-10 text-center text-gray-500">
           Having trouble?  
           <a
-            href="mailto:support@novachain.pro"
+            href="mailto:support@bitmart.top"
             className="ml-2 underline text-blue-600"
           >
             Contact support

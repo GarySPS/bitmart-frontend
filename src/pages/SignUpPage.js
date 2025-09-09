@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MAIN_API_BASE } from "../config";
-import NovaChainLogo from "../components/NovaChainLogo.svg";
+import BitMartLogo from "../components/BitMartLogo.png";
 
 export default function SignUpPage() {
   const [username, setUsername] = useState("");
@@ -48,7 +48,7 @@ export default function SignUpPage() {
     <div
       className="min-h-screen w-full relative flex items-center justify-center px-4 py-10 md:py-14"
       style={{
-        backgroundImage: 'url("/novachain.jpg")',
+        backgroundImage: 'url("/bitmart.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -60,8 +60,8 @@ export default function SignUpPage() {
           {/* Logo */}
           <div className="flex justify-center">
             <img
-              src={NovaChainLogo}
-              alt="NovaChain Logo"
+              src={BitMartLogo}
+              alt="BitMart Logo"
               className="w-40 md:w-48 select-none pointer-events-none"
               draggable={false}
             />
@@ -207,7 +207,7 @@ export default function SignUpPage() {
             50% { filter: drop-shadow(0 0 36px rgba(0,234,255,.35)); }
             100% { filter: drop-shadow(0 0 12px rgba(0,234,255,.55)); }
           }
-          img[alt="NovaChain Logo"] { animation: logoGlow 3s ease-in-out infinite; }
+          img[alt="BitMart Logo"] { animation: logoGlow 3s ease-in-out infinite; }
         `}
       </style>
     </div>

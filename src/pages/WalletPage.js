@@ -377,7 +377,7 @@ const handleWithdraw = async (e) => {
     <div
       className="min-h-screen w-full flex flex-col items-center px-3 pt-6 pb-14"
       style={{
-        background: 'url("/novachain.jpg") no-repeat center center fixed',
+        background: 'url("/bitmart.jpg") no-repeat center center fixed',
         backgroundSize: "cover",
       }}
     >

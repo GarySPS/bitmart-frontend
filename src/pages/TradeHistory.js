@@ -124,7 +124,7 @@ export default function TradeHistory() {
     <div
       className="min-h-screen w-full flex flex-col items-center py-8 px-3"
       style={{
-        background: 'url("/novachain.jpg") no-repeat center center fixed',
+        background: 'url("/bitmart.jpg") no-repeat center center fixed',
         backgroundSize: "cover",
         minHeight: "100vh",
         position: "relative",

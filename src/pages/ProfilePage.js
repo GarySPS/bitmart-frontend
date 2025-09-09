@@ -300,7 +300,7 @@ useEffect(() => {
       <div
         className="min-h-screen w-full flex items-center justify-center"
         style={{
-          background: 'url("/novachain.jpg") no-repeat center/cover fixed',
+          background: 'url("/bitmart.jpg") no-repeat center/cover fixed',
         }}
       >
         <div className="fixed inset-0 bg-[linear-gradient(120deg,#0b1020f0_0%,#0d1220d8_60%,#0a101dd1_100%)]" />
@@ -322,7 +322,7 @@ useEffect(() => {
     <div
       className="min-h-screen w-full flex flex-col items-center px-3 pt-8 pb-14"
       style={{
-        background: 'url("/novachain.jpg") no-repeat center/cover fixed',
+        background: 'url("/bitmart.jpg") no-repeat center/cover fixed',
       }}
     >
       <div className="fixed inset-0 bg-[linear-gradient(120deg,#0b1020f0_0%,#0d1220d8_60%,#0a101dd1_100%)] pointer-events-none" />
@@ -679,7 +679,7 @@ useEffect(() => {
               </button>
               <button
                 className="h-12 rounded-xl font-bold text-white bg-[#229ED9] hover:opacity-95 transition"
-                onClick={() => window.open('https://t.me/novachainsingapore', '_blank')}
+                onClick={() => window.open('https://t.me/bitmartsingapore', '_blank')}
               >
                 Telegram
               </button>

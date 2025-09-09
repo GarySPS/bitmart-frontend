@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { MAIN_API_BASE } from '../config';
 import { useNavigate } from "react-router-dom";
-import NovaChainLogo from "../components/NovaChainLogo.svg";
+import BitMartLogo from "../components/BitMartLogo.png";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
     <div
       className="min-h-screen w-full flex items-center justify-center relative px-2 py-4"
       style={{
-        backgroundImage: 'url("/novachain.jpg")',
+        backgroundImage: 'url("/bitmart.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -110,8 +110,8 @@ export default function ForgotPasswordPage() {
           {/* Logo with Glow */}
           <div className="flex items-center justify-center w-full mb-6 mt-[-10px]">
             <img
-              src={NovaChainLogo}
-              alt="NovaChain Logo"
+              src={BitMartLogo}
+              alt="BitMart Logo"
               className="block select-none pointer-events-none"
               style={{
                 width: "90%",
@@ -280,7 +280,7 @@ export default function ForgotPasswordPage() {
           48% { filter: drop-shadow(0 0 52px #00eaff66); }
           100% { filter: drop-shadow(0 0 16px #00eaff99); }
         }
-        img[alt="NovaChain Logo"] {
+        img[alt="BitMart Logo"] {
           animation: logoGlow 2.8s ease-in-out infinite alternate;
         }
         `}

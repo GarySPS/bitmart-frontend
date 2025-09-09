@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MAIN_API_BASE } from "../config";
-import NovaChainLogo from "../components/NovaChainLogo.svg";
+import BitMartLogo from "../components/BitMartLogo.png";
 import DatabaseErrorCard from "../components/DatabaseErrorCard";
 
 export default function LoginPage() {
@@ -44,7 +44,7 @@ export default function LoginPage() {
     <div
       className="min-h-screen w-full relative flex items-center justify-center px-4 py-10 md:py-14"
       style={{
-        backgroundImage: 'url("/novachain.jpg")',
+        backgroundImage: 'url("/bitmart.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -57,8 +57,8 @@ export default function LoginPage() {
           {/* logo */}
           <div className="flex justify-center">
             <img
-              src={NovaChainLogo}
-              alt="NovaChain Logo"
+              src={BitMartLogo}
+              alt="BitMart Logo"
               className="w-40 md:w-48 select-none pointer-events-none"
               draggable={false}
             />
@@ -158,7 +158,7 @@ export default function LoginPage() {
               WhatsApp
             </a>
             <a
-              href="https://t.me/novachainsingapore"
+              href="https://t.me/bitmartsingapore"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-xl px-3 py-2 text-center text-sm md:text-base font-bold text-white bg-[#229ED9] hover:bg-[#178fca] transition shadow"
@@ -187,7 +187,7 @@ export default function LoginPage() {
             50% { filter: drop-shadow(0 0 36px rgba(0,234,255,.35)); }
             100% { filter: drop-shadow(0 0 12px rgba(0,234,255,.55)); }
           }
-          img[alt="NovaChain Logo"] { animation: logoGlow 3s ease-in-out infinite; }
+          img[alt="BitMart Logo"] { animation: logoGlow 3s ease-in-out infinite; }
         `}
       </style>
     </div>
