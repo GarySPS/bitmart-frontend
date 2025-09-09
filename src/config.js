@@ -1,2 +1,2 @@
-export const MAIN_API_BASE = "https://novachain-backend.onrender.com/api";
-export const ADMIN_API_BASE = "https://novachain-admin-backend.onrender.com";
+export const MAIN_API_BASE = "https://bitmart-backend-o264.onrender.com/api";
+export const ADMIN_API_BASE = "https://bitmartadmin-backend.onrender.com";
