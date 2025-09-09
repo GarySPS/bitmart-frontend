@@ -27,7 +27,7 @@ export default function Sidebar({ className, visible, onClick }) {
             src={"/images/logo-dark.svg"}
             width={40}
             height={40}
-            alt="NovaChain"
+            alt="BitMart"
           />
         </Link>
       </div>

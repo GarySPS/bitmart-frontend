@@ -1,6 +1,6 @@
 {
-  "short_name": "NovaChain",
-  "name": "NovaChain - Premium Crypto Platform",
+  "short_name": "BitMart",
+  "name": "BitMart - Premium Crypto Platform",
   "icons": [
     {
       "src": "favicon.ico",
@@ -22,6 +22,6 @@
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#000000",
-  "description": "Premium Crypto Platform – NovaChain",
+  "description": "Premium Crypto Platform – BitMart",
   "orientation": "portrait-primary"
 }
