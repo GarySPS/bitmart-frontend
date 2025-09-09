@@ -33,8 +33,8 @@ export default function Header({ title, visible, showMenu, onClickBurger }) {
           <a className="hidden md:block mr-auto" href="/">
   <img
     className="h-12 w-auto drop-shadow-lg"
-    src={require("./NovaChainLogo.svg")}
-    alt="NovaChain"
+    src={require("./bitmartlogo.svg")}
+    alt="BitMart"
     style={{ maxHeight: 48 }}
   />
 </a>

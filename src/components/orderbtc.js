@@ -56,7 +56,7 @@ export default function OrderBTC() {
       {/* Pair + Price */}
       <div className="flex justify-between items-center px-6 mt-4 mb-2">
         <span className="text-gray-400 text-sm font-semibold">BTC/USDT</span>
-        <span className="bg-yellow-100 px-3 py-1 rounded-xl font-bold text-yellow-700 text-xs shadow ml-2">Novachain</span>
+        <span className="bg-yellow-100 px-3 py-1 rounded-xl font-bold text-yellow-700 text-xs shadow ml-2">BitMart</span>
       </div>
 
       {/* Table Headers */}
@@ -99,7 +99,7 @@ export default function OrderBTC() {
 
       {/* Footer */}
       <div className="text-right pb-3 px-6 text-[13px] text-gray-500 font-medium tracking-wide opacity-80">
-        Live order • NovaChain
+        Live order • BitMart
       </div>
     </div>
   );

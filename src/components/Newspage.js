@@ -81,7 +81,7 @@ export default function NewsPage() {
     <div
       className="min-h-screen w-full flex flex-col items-center px-3 pt-8 pb-14 font-sans"
       style={{
-        background: 'url("/novachain.jpg") no-repeat center/cover fixed',
+        background: 'url("/bitmart.jpg") no-repeat center/cover fixed',
       }}
     >
       {/* soft overlay */}
