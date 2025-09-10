@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Card from "../components/card";
 import NewsTicker from "../components/newsticker";
 import { MAIN_API_BASE } from "../config";
+import MarketTicker from "../components/MarketTicker";
 
 /* ---------- helpers ---------- */
 function formatBigNum(number) {
@@ -357,8 +358,13 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* ---- News Ticker ---- */}
-        <Card className="p-0 rounded-2xl shadow-lg border border-slate-100">
+        {/* ---- NEW: Market Ticker ---- */}
+<div className="mt-2">
+    <MarketTicker allCoins={coins} />
+</div>
+
+{/* ---- News Ticker ---- */}
+<Card className="p-0 rounded-2xl shadow-lg border border-slate-100">
           <div className="px-3 md:px-4 py-4">
             <NewsTicker
               news={

@@ -64,6 +64,7 @@ function AppShell() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/trade" element={<TradePage />} />
+            <Route path="/trade/:symbol" element={<TradePage />} />
             <Route path="/trade-history" element={<TradeHistory />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/wallet" element={<WalletPage />} />

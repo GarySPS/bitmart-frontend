@@ -4,6 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import { MAIN_API_BASE } from "../config";
 import { Menu, TrendingUp, TrendingDown } from 'lucide-react';
 import BitMartLogo from "../components/BitMartLogo.png";
+import { useParams } from 'react-router-dom';
 
 // Import all necessary modal and sub-components
 import BinaryTradeModal from '../components/BinaryTradeModal';
@@ -45,9 +46,9 @@ const parseJwt = (token) => {
 
 // --- Child Component for Coin Statistics ---
 const CoinStatsDisplay = ({ stats }) => {
-    if (!stats) {
-        return <div className="h-[76px] flex items-center justify-center"><BeautifulLoader text="Loading Stats..."/></div>;
-    }
+    if (!stats) {
+        return <div className="h-[76px]"></div>; // This empty div holds the space without showing a loader
+    }
     const price = stats.quote.USD.price;
     const change = stats.quote.USD.percent_change_24h;
     const isPositive = change >= 0;
@@ -76,7 +77,23 @@ export default function TradePage() {
     const [modalView, setModalView] = useState('none');
     const [isCoinMenuOpen, setIsCoinMenuOpen] = useState(false);
     const [tradeDirection, setTradeDirection] = useState(null);
-    const [selectedCoin, setSelectedCoin] = useState(COINS[0]);
+    const { symbol } = useParams(); // Get symbol from URL
+
+// Find the coin from our COINS array based on the URL symbol, or default to BTC
+const getInitialCoin = () => {
+    if (symbol) {
+        const foundCoin = COINS.find(c => c.symbol.toUpperCase() === symbol.toUpperCase());
+        if (foundCoin) return foundCoin;
+    }
+    return COINS[0]; // Default to BTC
+};
+
+    const [selectedCoin, setSelectedCoin] = useState(getInitialCoin());
+
+   // Effect to update the coin if the URL parameter changes while on the page
+    useEffect(() => {
+    setSelectedCoin(getInitialCoin());
+    }, [symbol]);
     const [balance, setBalance] = useState(0);
     const [loadingChart, setLoadingChart] = useState(true);
     const [allCoinStats, setAllCoinStats] = useState([]);
