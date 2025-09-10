@@ -214,6 +214,7 @@ const [withdrawToast, setWithdrawToast] = useState("");
   useEffect(() => {
     axios.get(`${MAIN_API_BASE}/deposit-addresses`)
       .then(res => {
+        console.log("RECEIVED DEPOSIT ADDRESSES:", res.data);
         const addresses = {};
         const qrcodes = {};
         res.data.forEach(row => {
@@ -283,6 +284,15 @@ const handleDepositSubmit = async (e) => {
   e.preventDefault();
   if (depositBusy) return;
   setDepositBusy(true);
+
+  const depositAddress = walletAddresses[selectedDepositCoin];
+  if (!depositAddress) {
+    setDepositToast("Deposit address not found. Contact support.");
+    setTimeout(() => setDepositToast(""), 2500);
+    setDepositBusy(false);
+    return;
+  }
+
   try {
     let screenshotUrl = null;
     if (depositScreenshot) {
@@ -291,7 +301,7 @@ const handleDepositSubmit = async (e) => {
     await axios.post(`${MAIN_API_BASE}/deposit`, {
       coin: selectedDepositCoin,
       amount: depositAmount,
-      address: walletAddresses[selectedDepositCoin],
+      address: depositAddress,
       screenshot: screenshotUrl,
     }, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -307,9 +317,10 @@ const handleDepositSubmit = async (e) => {
     // close after short delay
     setTimeout(() => { setDepositToast(""); closeModal(); }, 1400);
   } catch (err) {
-    setDepositToast(t("deposit_failed"));
-    console.error(err);
-    setTimeout(() => setDepositToast(""), 1400);
+    const errorMsg = err.response?.data?.error || t("deposit_failed");
+    setDepositToast(errorMsg);
+    console.error("Deposit submission error:", err);
+    setTimeout(() => setDepositToast(""), 2500);
   } finally {
     setDepositBusy(false);
   }
