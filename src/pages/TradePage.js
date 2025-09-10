@@ -1,107 +1,122 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { MAIN_API_BASE } from "../config";
-import Icon from "../components/icon";
-import OrderBTC from "../components/orderbtc";
-import { useTranslation } from "react-i18next";
-import { Menu } from 'lucide-react';
+import { Menu, TrendingUp, TrendingDown } from 'lucide-react';
+import BitMartLogo from "../components/BitMartLogo.png";
 
+// Import all necessary modal and sub-components
 import BinaryTradeModal from '../components/BinaryTradeModal';
 import BinaryResultModal from '../components/BinaryResultModal';
 import CoinSelectMenu from '../components/CoinSelectMenu';
-import CoinStatsCard from '../components/CoinStatsCard'; // <-- Import the new component
+import CountdownModal from '../components/CountdownModal';
+import BeautifulLoader from "../components/BeautifulLoader";
+import OrderBTC from "../components/orderbtc";
 
 const COINS = [
-  { symbol: "BTC", name: "Bitcoin", tv: "BINANCE:BTCUSDT" },
-  { symbol: "ETH", name: "Ethereum", tv: "BINANCE:ETHUSDT" },
-  { symbol: "SOL", name: "Solana", tv: "BINANCE:SOLUSDT" },
-  { symbol: "XRP", name: "Ripple", tv: "BINANCE:XRPUSDT" },
-  { symbol: "TON", name: "Toncoin", tv: "BINANCE:TONUSDT" },
+  { symbol: "BTC", name: "Bitcoin", tv: "BINANCE:BTCUSDT" },
+  { symbol: "ETH", name: "Ethereum", tv: "BINANCE:ETHUSDT" },
+  { symbol: "SOL", name: "Solana", tv: "BINANCE:SOLUSDT" },
+  { symbol: "XRP", name: "Ripple", tv: "BINANCE:XRPUSDT" },
+  { symbol: "TON", name: "Toncoin", tv: "BINANCE:TONUSDT" },
 ];
 
+// --- Helper Functions (Unchanged) ---
+function persistTradeState(tradeState) {
+  if (tradeState) localStorage.setItem("activeTrade", JSON.stringify(tradeState));
+  else localStorage.removeItem("activeTrade");
+}
+function loadTradeState() {
+  try {
+    const saved = localStorage.getItem("activeTrade");
+    if (!saved) return null;
+    const trade = JSON.parse(saved);
+    return trade.endAt > Date.now() ? trade : null;
+  } catch { return null; }
+}
+function createTradeState(trade_id, user_id, duration, amount, symbol, direction) {
+  const endAt = Date.now() + duration * 1000;
+  return { trade_id, user_id, duration, endAt, amount, symbol, direction };
+}
 const parseJwt = (token) => {
-  try { return JSON.parse(atob(token.split(".")[1])); } 
-  catch { return {}; }
+  try { return JSON.parse(atob(token.split(".")[1])); } 
+  catch { return {}; }
 };
 
-const TradingViewChart = ({ loading, onLoaded }) => {
-    useEffect(() => {
-        const timer = setTimeout(() => onLoaded(), 1500);
-        return () => clearTimeout(timer);
-    }, [onLoaded]);
+// --- Child Component for Coin Statistics ---
+const CoinStatsDisplay = ({ stats }) => {
+    if (!stats) {
+        return <div className="h-[76px] flex items-center justify-center"><BeautifulLoader text="Loading Stats..."/></div>;
+    }
+    const price = stats.quote.USD.price;
+    const change = stats.quote.USD.percent_change_24h;
+    const isPositive = change >= 0;
 
     return (
-        <div className="relative w-full h-[420px] rounded-lg bg-[#101726] border border-[#1a2343]">
-            <div id="tradingview_chart_container" className="w-full h-full" />
-            {loading && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0c1323e6] backdrop-blur-sm">
-                    <svg className="animate-spin mb-4" width="54" height="54" viewBox="0 0 54 54" fill="none">
-                        <circle cx="27" cy="27" r="24" stroke="#2474ff44" strokeWidth="5" />
-                        <path d="M51 27a24 24 0 1 1-48 0" stroke="#FFD700" strokeWidth="5" strokeLinecap="round" />
-                    </svg>
-                    <div className="text-lg font-bold text-sky-100">Loading Chart...</div>
-                </div>
-            )}
+        <div className="flex justify-between items-start p-4">
+            <div>
+                <p className="text-3xl font-bold tracking-tighter text-white">
+                    {price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                </p>
+                <p className={`text-lg font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                    {isPositive ? '+' : ''}{change.toFixed(2)}%
+                </p>
+            </div>
+            <div className="text-right text-sm text-gray-400">
+                <p>24h High: <span className="font-semibold text-gray-200">{stats.high_24h.toLocaleString()}</span></p>
+                <p>24h Low: <span className="font-semibold text-gray-200">{stats.low_24h.toLocaleString()}</span></p>
+                <p>24h Vol: <span className="font-semibold text-gray-200">{(stats.quote.USD.volume_24h / 1_000_000).toFixed(2)}M</span></p>
+            </div>
         </div>
     );
 };
 
+
 export default function TradePage() {
-    const { t } = useTranslation();
-    const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+    const [modalView, setModalView] = useState('none');
     const [isCoinMenuOpen, setIsCoinMenuOpen] = useState(false);
     const [tradeDirection, setTradeDirection] = useState(null);
-    const [isTrading, setIsTrading] = useState(false);
-    const [countdown, setCountdown] = useState(0);
-    const [tradeResultDetail, setTradeResultDetail] = useState(null);
     const [selectedCoin, setSelectedCoin] = useState(COINS[0]);
     const [balance, setBalance] = useState(0);
     const [loadingChart, setLoadingChart] = useState(true);
-    const [toast, setToast] = useState(null);
-    
-    // NEW STATE for all coin statistics
     const [allCoinStats, setAllCoinStats] = useState([]);
+    
+    const [tradeState, setTradeState] = useState(loadTradeState());
+    const [tradeDetail, setTradeDetail] = useState(null);
+    const [waitingForResult, setWaitingForResult] = useState(false);
+    
     const token = localStorage.getItem("token");
-
-    // DERIVED STATE: find the stats for the currently selected coin
     const currentCoinStats = allCoinStats.find(c => c.symbol === selectedCoin.symbol) || null;
     const coinPrice = currentCoinStats ? currentCoinStats.quote.USD.price : null;
 
     useEffect(() => {
-        const fetchBalance = () => {
-            if (!token) return;
-            axios.get(`${MAIN_API_BASE}/balance`, { headers: { Authorization: `Bearer ${token}` } })
-                .then(res => {
-                    const usdtAsset = (res.data.assets || []).find(a => a.symbol === 'USDT');
-                    if (usdtAsset) setBalance(parseFloat(usdtAsset.balance));
-                })
-                .catch(err => console.error("Failed to fetch balance:", err));
-        };
-        fetchBalance();
-    }, [token]);
-
-    // MODIFIED DATA FETCHING: Fetches all coins' detailed stats
-    useEffect(() => {
-        const fetchAllStats = async () => {
-            try {
-                const res = await axios.get(`${MAIN_API_BASE}/prices`);
-                setAllCoinStats(res.data.data || []);
-            } catch (error) {
-                console.error("Failed to fetch coin stats", error);
-            }
+        const fetchAllStats = () => {
+            axios.get(`${MAIN_API_BASE}/prices`)
+                .then(res => setAllCoinStats(res.data.data || []))
+                .catch(error => console.error("Failed to fetch coin stats", error));
         };
         fetchAllStats();
-        const interval = setInterval(fetchAllStats, 10000); // Poll every 10s
+        const interval = setInterval(fetchAllStats, 10000);
         return () => clearInterval(interval);
     }, []);
+
+    const fetchBalance = () => {
+        if (!token) return;
+        axios.get(`${MAIN_API_BASE}/balance`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(res => {
+                const usdtAsset = (res.data.assets || []).find(a => a.symbol === 'USDT');
+                if (usdtAsset) setBalance(parseFloat(usdtAsset.balance));
+            })
+            .catch(err => console.error("Failed to fetch balance:", err));
+    };
+    useEffect(fetchBalance, [token, tradeDetail]);
 
     useEffect(() => {
         setLoadingChart(true);
         const scriptId = 'tradingview-widget-script';
         let script = document.getElementById(scriptId);
-        if (script) script.remove();
-        
+        if(script) script.remove();
+
         script = document.createElement("script");
         script.id = scriptId;
         script.src = "https://s3.tradingview.com/tv.js";
@@ -118,7 +133,7 @@ export default function TradePage() {
                     style: "1",
                     locale: "en",
                     toolbar_bg: "#101726",
-                    backgroundColor: "#101726",
+                    backgroundColor: "rgba(0,0,0,0)",
                     enable_publishing: false,
                     allow_symbol_change: false,
                     hide_top_toolbar: true,
@@ -130,175 +145,166 @@ export default function TradePage() {
                     overrides: {},
                     loading_screen: { backgroundColor: "#101726" },
                 });
+                setTimeout(() => setLoadingChart(false), 1400);
             }
         };
         document.body.appendChild(script);
+
         return () => {
-            let existingScript = document.getElementById(scriptId);
-            if (existingScript) existingScript.remove();
+            document.getElementById(scriptId)?.remove();
         };
     }, [selectedCoin]);
 
-    const showToast = (text, type = "error") => {
-        const id = Math.random();
-        setToast({ text, type, id });
-        setTimeout(() => setToast(t => (t && t.id === id ? null : t)), 2500);
+    const pollResult = async (trade_id, user_id) => {
+        let tries = 0, trade = null;
+        while (tries < 10 && (!trade || trade.result === "PENDING")) {
+            try {
+                const res = await axios.get(`${MAIN_API_BASE}/trade/history/${user_id}`, { headers: { Authorization: `Bearer ${token}` } });
+                trade = res.data.find((t) => t.id === trade_id);
+                if (trade && trade.result !== "PENDING") break;
+            } catch {}
+            await new Promise((r) => setTimeout(r, 1500));
+            tries++;
+        }
+        setWaitingForResult(false);
+        setTradeState(null);
+        persistTradeState(null);
+        if (trade && trade.result !== "PENDING") {
+            setTradeDetail(trade);
+            setModalView('result');
+        } else {
+            alert("Could not retrieve trade result. Please check your trade history.");
+        }
     };
 
-    const handleOpenTradeModal = (direction) => {
-        if (isTrading) return;
-        setTradeDirection(direction);
-        setIsTradeModalOpen(true);
+    const onTimerComplete = async () => {
+        if (!tradeState) return;
+        setWaitingForResult(true);
+        await pollResult(tradeState.trade_id, tradeState.user_id);
     };
-
-    const handleConfirmTrade = async ({ amount, duration }) => {
-        setIsTradeModalOpen(false);
-        if (!coinPrice || isTrading || !token) {
-            showToast(!token ? "Please log in to trade." : "A trade is already active.", "warning");
+    
+    const executeTrade = async ({ amount, duration, profitPercentage }) => {
+        setModalView('none');
+        if (!coinPrice || !token || tradeState) {
+            alert(!token ? "Please log in to trade." : "A trade is already active.");
             return;
         }
-        setIsTrading(true);
-        setCountdown(duration);
 
+        const user_id = parseJwt(token).id;
         try {
             const res = await axios.post(`${MAIN_API_BASE}/trade`, {
+                user_id,
                 direction: tradeDirection.toUpperCase(),
                 amount: Number(amount),
                 duration: Number(duration),
                 symbol: selectedCoin.symbol,
                 client_price: Number(coinPrice),
+                profit_percentage: profitPercentage,
             }, { headers: { Authorization: `Bearer ${token}` } });
             
-            if (!res.data.trade_id) throw new Error("Failed to start trade");
-            setTimeout(() => pollForResult(res.data.trade_id), duration * 1000);
+            if (!res.data.trade_id) throw new Error("Backend did not return a trade_id");
 
+            const newTradeState = createTradeState(res.data.trade_id, user_id, duration, amount, selectedCoin.symbol, tradeDirection.toUpperCase());
+            setTradeState(newTradeState);
+            persistTradeState(newTradeState);
         } catch (err) {
-            setIsTrading(false);
-            setCountdown(0);
-            showToast(`Trade failed: ${err.response?.data?.error || err.message}`, "error");
+            alert(`Trade failed: ${err.response?.data?.error || err.message}`);
         }
     };
 
-    const pollForResult = (trade_id) => {
-        const user_id = parseJwt(token).id;
-        let tries = 0;
-        const interval = setInterval(async () => {
-            tries++;
-            if (tries > 10) {
-                clearInterval(interval);
-                setIsTrading(false);
-                showToast("Result timed out. Please check your trade history.", "info");
-                return;
-            }
-            try {
-                const res = await axios.get(`${MAIN_API_BASE}/trade/history/${user_id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const trade = res.data.find(t => t.id === trade_id);
-                if (trade && trade.result !== "PENDING") {
-                    clearInterval(interval);
-                    setIsTrading(false);
-                    setTradeResultDetail(trade);
-                    axios.get(`${MAIN_API_BASE}/balance`, { headers: { Authorization: `Bearer ${token}` } })
-                        .then(balRes => {
-                            const usdtAsset = (balRes.data.assets || []).find(a => a.symbol === 'USDT');
-                            if (usdtAsset) setBalance(parseFloat(usdtAsset.balance));
-                        });
-                }
-            } catch (error) {
-                 console.error("Polling error:", error);
-            }
-        }, 1500);
+    const handleOpenTradeModal = (direction) => {
+        if (tradeState) return;
+        setTradeDirection(direction);
+        setModalView('trade');
     };
     
     useEffect(() => {
-        if (!isTrading || countdown <= 0) return;
-        const timer = setInterval(() => setCountdown(prev => (prev > 0 ? prev - 1 : 0)), 1000);
-        return () => clearInterval(timer);
-    }, [isTrading, countdown]);
+        if (tradeState) {
+            setModalView('countdown');
+        }
+    }, [tradeState]);
 
     return (
-        <div className="w-full max-w-full min-h-screen bg-[#0b1020] text-white px-2 pt-4 pb-20 overflow-x-hidden">
-            <div className="sticky top-0 z-10 bg-[#0b1020] py-3 px-2 flex items-center justify-between">
+        <div className="w-full max-w-full min-h-screen bg-[#0b1020] text-white overflow-x-hidden">
+            
+            {/* --- Header --- */}
+            <header className="sticky top-0 z-20 bg-[#0b1020]/80 backdrop-blur-md p-4 flex items-center justify-between border-b border-gray-800">
+                <h1 className="text-xl font-semibold text-white">Binary Trading</h1>
                 <button 
                     onClick={() => setIsCoinMenuOpen(true)} 
-                    disabled={isTrading}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1C2127] text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!!tradeState}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1C2127] text-white font-bold text-base disabled:opacity-50 transition-colors hover:bg-gray-700"
                 >
-                    <Menu size={20} />
+                    <Menu size={18} />
                     {selectedCoin.symbol}/USDT
-                    <Icon name="chevron-down" className="w-5 h-5 ml-1" />
                 </button>
-            </div>
-
-            {/* NEW STATS CARD IS ADDED HERE */}
-            <CoinStatsCard stats={currentCoinStats} />
-
-            <TradingViewChart key={selectedCoin.symbol} loading={loadingChart} onLoaded={() => setLoadingChart(false)} />
+            </header>
             
-            {isTrading && (
-                <div className="mt-4 p-4 rounded-lg bg-black/30 text-center animate-pulse">
-                    <p className="font-semibold text-gray-300">Trading in progress...</p>
-                    <p className="text-4xl font-bold text-[#3af0ff]">{countdown}s</p>
-                </div>
-            )}
-            
-            <div className="fixed left-0 right-0 bg-[#1C2127] p-4 border-t border-gray-700 grid grid-cols-2 gap-4 z-40"
-                 style={{ bottom: 'calc(65px + env(safe-area-inset-bottom))' }}>
-                <button
-                    onClick={() => handleOpenTradeModal('buy')}
-                    disabled={isTrading}
-                    className="w-full py-4 rounded-xl font-bold text-lg bg-green-500 hover:bg-green-600 disabled:bg-gray-600 transition"
-                >
-                    Buy Long
-                </button>
-                <button
-                    onClick={() => handleOpenTradeModal('sell')}
-                    disabled={isTrading}
-                    className="w-full py-4 rounded-xl font-bold text-lg bg-red-500 hover:bg-red-600 disabled:bg-gray-600 transition"
-                >
-                    Sell Short
-                </button>
-            </div>
-            
-            <div className="mt-6 pb-24">
-                <OrderBTC />
-            </div>
+            <main className="pb-40">
+                <CoinStatsDisplay stats={currentCoinStats} />
 
-            <AnimatePresence>
-                {isTradeModalOpen && (
-                    <BinaryTradeModal
-                        direction={tradeDirection}
-                        balance={balance}
-                        onClose={() => setIsTradeModalOpen(false)}
-                        onConfirm={handleConfirmTrade}
-                    />
-                )}
-                {tradeResultDetail && (
-                    <BinaryResultModal 
-                        tradeDetail={tradeResultDetail}
-                        onClose={() => setTradeResultDetail(null)}
-                    />
-                )}
-                {toast && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 40 }}
-                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[99]"
-                    >
-                        <div className={`px-4 py-2 rounded-lg text-white font-semibold ${toast.type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`}>
-                            {toast.text}
+                {/* --- Trading View Chart --- */}
+                <div className="relative w-full h-[40vh] min-h-[350px] px-4">
+                    <div id="tradingview_chart_container" className="w-full h-full" />
+                    {loadingChart && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0b1020]">
+                            <BeautifulLoader text="Refreshing Price..." />
                         </div>
-                    </motion.div>
+                    )}
+                </div>
+
+                 {/* --- Order Book --- */}
+                <div className="mt-6 px-4">
+                    <OrderBTC />
+                </div>
+            </main>
+            
+            {/* --- Fixed Buy/Sell Buttons --- */}
+            <div 
+                className="fixed bottom-[65px] left-0 right-0 z-10 bg-gradient-to-t from-[#0b1020] via-[#0b1020] to-transparent pt-8 px-4 pb-4"
+                style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+            >
+                <div className="grid grid-cols-2 gap-4">
+                    <button 
+                        onClick={() => handleOpenTradeModal('buy')} 
+                        disabled={!!tradeState} 
+                        className="w-full py-4 rounded-xl font-bold text-lg bg-green-500 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-400 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <TrendingUp size={22}/>
+                        Buy Long
+                    </button>
+                    <button 
+                        onClick={() => handleOpenTradeModal('sell')} 
+                        disabled={!!tradeState} 
+                        className="w-full py-4 rounded-xl font-bold text-lg bg-red-500 hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-400 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <TrendingDown size={22}/>
+                        Sell Short
+                    </button>
+                </div>
+            </div>
+
+            {/* --- Modals --- */}
+            <AnimatePresence>
+                {modalView === 'trade' && (
+                    <BinaryTradeModal direction={tradeDirection} balance={balance} onClose={() => setModalView('none')} onConfirm={executeTrade} />
+                )}
+                {modalView === 'countdown' && tradeState && (
+                    <CountdownModal tradeDetails={tradeState} isWaiting={waitingForResult} onComplete={onTimerComplete} />
+                )}
+                {modalView === 'result' && tradeDetail && (
+                    <BinaryResultModal tradeDetail={tradeDetail} onClose={() => { setTradeDetail(null); setModalView('none'); }} />
                 )}
                 {isCoinMenuOpen && (
-                    <CoinSelectMenu
-                        isOpen={isCoinMenuOpen}
-                        onClose={() => setIsCoinMenuOpen(false)}
-                        onSelectCoin={(coin) => setSelectedCoin(coin)}
-                        currentCoinSymbol={selectedCoin.symbol}
-                        disabled={isTrading}
+                    <CoinSelectMenu 
+                        isOpen={isCoinMenuOpen} 
+                        onClose={() => setIsCoinMenuOpen(false)} 
+                        onSelectCoin={(coin) => {
+                            setSelectedCoin(coin);
+                            setIsCoinMenuOpen(false);
+                        }} 
+                        currentCoinSymbol={selectedCoin.symbol} 
+                        disabled={!!tradeState} 
                     />
                 )}
             </AnimatePresence>

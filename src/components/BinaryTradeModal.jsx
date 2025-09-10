@@ -5,7 +5,14 @@ export default function BinaryTradeModal({ direction, onClose, onConfirm, balanc
   const [duration, setDuration] = useState(30);
   const [amount, setAmount] = useState('100');
 
-  const durations = [15, 30, 60, 120];
+  // NEW: Added profit percentage to each duration
+
+const durations = [
+  { seconds: 15, profit: 30 },
+  { seconds: 30, profit: 50 },
+  { seconds: 60, profit: 70 },
+  { seconds: 120, profit: 100 },
+];
   const quickAmounts = [25, 50, 100, 250, 500];
 
   const handleConfirm = () => {
@@ -13,12 +20,18 @@ export default function BinaryTradeModal({ direction, onClose, onConfirm, balanc
       alert("Please enter a valid amount.");
       return;
     }
-    onConfirm({ amount: Number(amount), duration });
+    // Pass back the number of seconds
+    onConfirm({ amount: Number(amount), duration: duration });
   };
+  
+  // Find the selected profit for display
+  const selectedProfit = durations.find(d => d.seconds === duration)?.profit || 0;
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-end z-50">
-      <div className="bg-[#1C2127] w-full max-w-md rounded-t-2xl p-5 flex flex-col text-white animate-slide-up">
+    // CHANGED: items-center to float the modal in the middle
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      {/* CHANGED: rounded-2xl for all corners, and added max-w-sm */}
+      <div className="bg-[#1C2127] w-full max-w-sm rounded-2xl p-5 flex flex-col text-white animate-scale-in">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className={`text-xl font-bold ${direction === 'buy' ? 'text-green-400' : 'text-red-400'}`}>
@@ -29,17 +42,18 @@ export default function BinaryTradeModal({ direction, onClose, onConfirm, balanc
           </button>
         </div>
 
-        {/* Duration Selection */}
+        {/* MODIFIED: Duration Selection with Profit % */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-300 mb-2">Select Period</label>
           <div className="grid grid-cols-4 gap-3">
             {durations.map((d) => (
               <button
-                key={d}
-                onClick={() => setDuration(d)}
-                className={`py-3 rounded-lg font-semibold transition ${duration === d ? 'bg-[#3af0ff] text-black ring-2 ring-white/50' : 'bg-[#2A3139] text-gray-200'}`}
+                key={d.seconds}
+                onClick={() => setDuration(d.seconds)}
+                className={`py-2 rounded-lg font-semibold transition flex flex-col items-center justify-center ${duration === d.seconds ? 'bg-[#3af0ff] text-black ring-2 ring-white/50' : 'bg-[#2A3139] text-gray-200'}`}
               >
-                {d}s
+                <span className="text-lg">{d.seconds}s</span>
+                <span className="text-xs opacity-80">+{d.profit}%</span>
               </button>
             ))}
           </div>
@@ -47,7 +61,13 @@ export default function BinaryTradeModal({ direction, onClose, onConfirm, balanc
 
         {/* Amount Input */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-2">Amount (USDT)</label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+              Amount (USDT)
+              {/* Added a dynamic profit calculation */}
+              <span className="text-green-400 ml-2 font-semibold">
+                Profit: +${(Number(amount) * (selectedProfit / 100)).toFixed(2)}
+              </span>
+          </label>
           <input
             type="number"
             value={amount}

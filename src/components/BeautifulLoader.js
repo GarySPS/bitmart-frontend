@@ -1,7 +1,7 @@
 // src/components/BeautifulLoader.js
 import React from "react";
 
-export default function BeautifulLoader({ text = "Refreshing BTC Price" }) {
+export default function BeautifulLoader({ text = "Refreshing Price" }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[220px]">
       <svg className="animate-spin h-14 w-14 text-blue-400 mb-4" viewBox="0 0 50 50">
