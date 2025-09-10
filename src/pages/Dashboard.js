@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Card from "../components/card";
 import NewsTicker from "../components/newsticker";
 import { MAIN_API_BASE } from "../config";
@@ -21,6 +22,7 @@ const pctClass = (v) =>
     : "text-slate-600 bg-slate-50 ring-1 ring-slate-200";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [coins, setCoins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newsHeadlines, setNewsHeadlines] = useState([]);
@@ -36,12 +38,11 @@ export default function Dashboard() {
 
     const fetchPrices = async () => {
       try {
-        // ask backend for lots (most CoinMarketCap-style proxies accept limit)
         const urls = [
           `${MAIN_API_BASE}/prices?limit=200`,
           `${MAIN_API_BASE}/prices?limit=150`,
           `${MAIN_API_BASE}/prices?limit=100`,
-          `${MAIN_API_BASE}/prices`, // final fallback
+          `${MAIN_API_BASE}/prices`,
         ];
         let freshCoins = [];
         for (const u of urls) {
@@ -126,14 +127,12 @@ export default function Dashboard() {
         case "name":
           return (a.name || "").localeCompare(b.name || "");
         default:
-          // mcap
           return (bu.market_cap || 0) - (au.market_cap || 0);
       }
     });
     return list;
   }, [coins, query, sortBy]);
 
-  // Always show up to 100 in the table
   const display = useMemo(
     () => filteredSorted.slice(0, 100),
     [filteredSorted]
@@ -184,29 +183,29 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="w-full flex flex-col items-center px-3 pt-3 pb-6">
-      <div className="w-full max-w-7xl mx-auto space-y-4">
-        {/* ---- Top Stats ---- */}
+    <div className="w-full flex flex-col items-center px-3 pt-3 pb-24 bg-slate-50/50">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+
+        {/* ---- Market Ticker (Moved to top) ---- */}
+        <MarketTicker allCoins={coins} />
+        
+        {/* ---- Main Market Table ---- */}
         <Card className="p-0 overflow-hidden rounded-2xl shadow-lg border border-slate-100">
           <div className="bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-4 py-4 md:px-6 md:py-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
               <div>
-                <div className="text-slate-500 text-sm">
-                  Global Market Cap 
-                </div>
+                <div className="text-slate-500 text-sm">Global Market Cap</div>
                 <div className="text-2xl md:text-3xl font-semibold tracking-tight">
                   {formatBigNum(totalMcap)}
                 </div>
               </div>
               <div>
-                <div className="text-slate-500 text-sm">
-                  24h Volume 
-                </div>
+                <div className="text-slate-500 text-sm">24h Volume</div>
                 <div className="text-2xl md:text-3xl font-semibold tracking-tight">
                   {formatBigNum(totalVol)}
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:col-span-1">
                 <select
                   className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 outline-none focus:ring-2 focus:ring-sky-200"
                   value={sortBy}
@@ -218,11 +217,10 @@ export default function Dashboard() {
                   <option value="price">Sort by Price</option>
                   <option value="name">Sort by Name</option>
                 </select>
-
                 <div className="relative">
                   <input
                     className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 pr-10 outline-none focus:ring-2 focus:ring-sky-200"
-                    placeholder="Search coin by name or symbol…"
+                    placeholder="Search coin..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
@@ -231,18 +229,17 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ---- Table ---- */}
           <div className="w-full overflow-x-auto">
             <table className="w-full text-sm md:text-base">
-  <colgroup>
-    <col className="w-24" />   {/* # + logo */}
-    <col />                    {/* Name (flex) */}
-    <col className="w-28" />   {/* Symbol */}
-    <col className="w-40" />   {/* Price */}
-    <col className="w-28" />   {/* 24h */}
-    <col className="w-44" />   {/* 24h Volume */}
-    <col className="w-44" />   {/* Market Cap */}
-  </colgroup>
+              <colgroup>
+                <col className="w-24" />
+                <col />
+                <col className="w-28" />
+                <col className="w-40" />
+                <col className="w-28" />
+                <col className="w-44" />
+                <col className="w-44" />
+              </colgroup>
               <thead className="bg-white sticky top-0 z-10">
                 <tr className="text-left text-slate-600 border-y border-slate-100">
                   <th className="py-3.5 px-3 text-center">#</th>
@@ -250,105 +247,55 @@ export default function Dashboard() {
                   <th className="py-3.5 px-3">Symbol</th>
                   <th className="py-3.5 px-3 text-right">Price</th>
                   <th className="py-3.5 px-3">24h</th>
-                  <th className="py-3.5 px-3 text-right whitespace-nowrap">
-                    24h Volume
-                  </th>
-                  <th className="py-3.5 px-3 text-right whitespace-nowrap">
-                    Market Cap
-                  </th>
+                  <th className="py-3.5 px-3 text-right whitespace-nowrap">24h Volume</th>
+                  <th className="py-3.5 px-3 text-right whitespace-nowrap">Market Cap</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
                 {loading
-                  ? Array.from({ length: 12 }).map((_, i) => (
-                      <SkeletonRow i={i} key={i} />
-                    ))
+                  ? Array.from({ length: 12 }).map((_, i) => <SkeletonRow i={i} key={i} />)
                   : display.map((coin, idx) => {
                       const u = coin.quote?.USD || {};
-                      const change =
-                        typeof u.percent_change_24h === "number"
-                          ? u.percent_change_24h
-                          : null;
+                      const change = typeof u.percent_change_24h === "number" ? u.percent_change_24h : null;
                       return (
-                        <tr
-                          key={coin.id || coin.symbol || idx}
-                          className="group border-b border-slate-100 hover:bg-slate-50/60 transition-colors"
-                          style={{ height: 64 }}
+                        <tr 
+                           key={coin.id || coin.symbol || idx} 
+                           className="group border-b border-slate-100 hover:bg-slate-100/80 transition-colors cursor-pointer" 
+                           style={{ height: 64 }} 
+                           onClick={() => navigate(`/trade/${coin.symbol}`)}
                         >
-                          {/* Rank / Logo */}
-<td className="py-3 px-3">
-  <div className="flex items-center">
-    <span className="text-slate-400 text-xs font-medium w-8 tabular-nums text-right mr-2">
-      {String(idx + 1).padStart(2, "0")}
-    </span>
-    <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
-      <img
-        src={`https://assets.coincap.io/assets/icons/${coin.symbol?.toLowerCase()}@2x.png`}
-        onError={(e) => { e.currentTarget.style.opacity = "0"; }}
-        alt={coin.symbol}
-        className="w-8 h-8 object-contain"
-      />
-    </div>
-  </div>
-</td>
-
-                          {/* Name */}
                           <td className="py-3 px-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-slate-800">
-                                {coin.name || "--"}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-500 ring-1 ring-slate-200">
-                                #{coin.cmc_rank || idx + 1}
-                              </span>
+                            <div className="flex items-center">
+                              <span className="text-slate-400 text-xs font-medium w-8 tabular-nums text-right mr-2">{String(idx + 1).padStart(2, "0")}</span>
+                              <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                                <img src={`https://assets.coincap.io/assets/icons/${coin.symbol?.toLowerCase()}@2x.png`} onError={(e) => { e.currentTarget.style.opacity = "0"; }} alt={coin.symbol} className="w-8 h-8 object-contain" />
+                              </div>
                             </div>
                           </td>
-
-                          {/* Symbol */}
-<td className="py-3 px-3">
-  <span className="font-mono text-slate-700 bg-slate-50 ring-1 ring-slate-200 px-2 py-1 rounded-md inline-block w-20 text-center">
-    {coin.symbol}
-  </span>
-</td>
-
-                          {/* Price */}
-                          <td className="py-3 px-3 text-right font-semibold tabular-nums">
-                            {typeof u.price === "number"
-                              ? "$" +
-                                u.price.toLocaleString(undefined, {
-                                  maximumFractionDigits: 6,
-                                })
-                              : "--"}
-                          </td>
-
-                          {/* 24h Change */}
                           <td className="py-3 px-3">
-                            {change === null ? (
-                              <span className="text-slate-400">--</span>
-                            ) : (
-                              <span
-                                className={`inline-flex items-center justify-center min-w-[84px] px-2 py-1 rounded-lg text-sm font-semibold ${pctClass(
-                                  change
-                                )}`}
-                              >
-                                {change > 0 ? "+" : ""}
-                                {change.toFixed(2)}%
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-800">{coin.name || "--"}</span>
+                              <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-500 ring-1 ring-slate-200">#{coin.cmc_rank || idx + 1}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="font-mono text-slate-700 bg-slate-50 ring-1 ring-slate-200 px-2 py-1 rounded-md inline-block w-20 text-center">{coin.symbol}</span>
+                          </td>
+                          <td className="py-3 px-3 text-right font-semibold tabular-nums">
+                            {typeof u.price === "number" ? "$" + u.price.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "--"}
+                          </td>
+                          <td className="py-3 px-3">
+                            {change === null ? (<span className="text-slate-400">--</span>) : (
+                              <span className={`inline-flex items-center justify-center min-w-[84px] px-2 py-1 rounded-lg text-sm font-semibold ${pctClass(change)}`}>
+                                {change > 0 ? "+" : ""}{change.toFixed(2)}%
                               </span>
                             )}
                           </td>
-
-                          {/* Volume */}
                           <td className="py-3 px-3 text-right tabular-nums">
-                            <span className="inline-block px-2 py-1 rounded-md bg-slate-50 ring-1 ring-slate-200">
-                              {u.volume_24h ? formatBigNum(u.volume_24h) : "--"}
-                            </span>
+                            <span className="inline-block px-2 py-1 rounded-md bg-slate-50 ring-1 ring-slate-200">{u.volume_24h ? formatBigNum(u.volume_24h) : "--"}</span>
                           </td>
-
-                          {/* Market Cap */}
                           <td className="py-3 px-3 text-right tabular-nums">
-                            <span className="inline-block px-2 py-1 rounded-md bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 font-medium">
-                              {u.market_cap ? formatBigNum(u.market_cap) : "--"}
-                            </span>
+                            <span className="inline-block px-2 py-1 rounded-md bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 font-medium">{u.market_cap ? formatBigNum(u.market_cap) : "--"}</span>
                           </td>
                         </tr>
                       );
@@ -357,22 +304,11 @@ export default function Dashboard() {
             </table>
           </div>
         </Card>
-
-        {/* ---- NEW: Market Ticker ---- */}
-<div className="mt-2">
-    <MarketTicker allCoins={coins} />
-</div>
-
-{/* ---- News Ticker ---- */}
-<Card className="p-0 rounded-2xl shadow-lg border border-slate-100">
+        
+        {/* ---- News Ticker ---- */}
+        <Card className="p-0 rounded-2xl shadow-lg border border-slate-100">
           <div className="px-3 md:px-4 py-4">
-            <NewsTicker
-              news={
-                newsHeadlines.length
-                  ? newsHeadlines
-                  : ["Loading latest crypto headlines..."]
-              }
-            />
+            <NewsTicker news={newsHeadlines.length ? newsHeadlines : ["Loading latest crypto headlines..."]}/>
           </div>
         </Card>
       </div>
