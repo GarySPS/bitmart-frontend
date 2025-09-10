@@ -12,8 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = "https://zgnefojwdijycgcqngke.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnbmVmb2p3ZGlqeWNnY3FuZ2tlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNTc3MjcsImV4cCI6MjA2NTczMzcyN30.RWPMuioeBKt_enKio-Z-XIr6-bryh3AEGSxmyc7UW7k";
+const SUPABASE_URL = "https://epwhsyfcppenaxhrhfpy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwd2hzeWZjcHBlbmF4aHJoZnB5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzQxNjUyOSwiZXhwIjoyMDcyOTkyNTI5fQ.6qzBXe3IcdYF8FKSa83byRyydFImR0zmcm2JZnJA1hw";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------------- helpers (UI only) ---------------- */
