@@ -406,7 +406,7 @@ const handleWithdraw = async (e) => {
 
 <Card className="rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden h-full">
   <div className="w-full h-full min-h-[180px] md:min-h-[220px] flex items-center justify-center
-                  px-4 sm:px-6 bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50">
+                   px-4 sm:px-6 bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50">
     <div className="flex flex-col items-center gap-1 w-full">
       <div className="text-center text-slate-500 text-xs sm:text-sm font-semibold">
         {t("total_balance")}
@@ -422,108 +422,108 @@ const handleWithdraw = async (e) => {
       >
         {fmtUSD(totalUsd)}
       </div>
+
+      {/* --- Add this section for the buttons --- */}
+      <div className="mt-4 flex gap-4 w-full justify-center">
+        <button
+          className="h-10 px-6 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition"
+          onClick={() => openModal("deposit", "USDT")}
+        >
+          <span className="inline-flex items-center gap-1"><Icon name="download" />{t("deposit")}</span>
+        </button>
+        <button
+          className="h-10 px-6 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+          onClick={() => openModal("withdraw", "USDT")}
+        >
+          <span className="inline-flex items-center gap-1"><Icon name="upload" />{t("withdraw")}</span>
+        </button>
+      </div>
+      {/* -------------------------------------- */}
     </div>
   </div>
 </Card>
 
-          {/* Assets table */}
+          {/* Assets polished list */}
           <Card className="rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden">
-            <div className="px-5 pt-5">
+            <div className="px-5 py-5">
               <div className="text-slate-700 font-semibold">{t("my_assets")}</div>
             </div>
-            <div className="w-full overflow-x-auto">
-              <table className="w-full text-sm md:text-base">
-                <thead className="bg-white sticky top-0 z-10">
-                  <tr className="text-left text-slate-600 border-y border-slate-100">
-                    <th className="py-3.5 px-4">{t("type")}</th>
-                    <th className="py-3.5 px-4 text-right">{t("amount")}</th>
-                    <th className="py-3.5 px-4 text-right">{t("usd_value", "USD Value")}</th>
-                    <th className="py-3.5 px-4 text-right">{t("Transfer")}</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {balances.map(({ symbol, icon, balance }) => (
-                    <tr
-                      key={symbol}
-                      className="group border-b border-slate-100 hover:bg-slate-50/60 transition-colors"
-                      style={{ height: 64 }}
-                    >
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Icon name={symbol?.toLowerCase() || "coin"} className="w-6 h-6" />
-                          <span className="font-semibold text-slate-900">{symbol}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right tabular-nums font-medium text-slate-800">
+            <div className="flex flex-col gap-2 p-3">
+              {balances.map(({ symbol, icon, balance }) => (
+                <div
+                  key={symbol}
+                  className="w-full bg-white rounded-2xl ring-1 ring-slate-100 hover:bg-slate-50/60 transition-colors p-4 md:p-5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Icon name={symbol?.toLowerCase() || "coin"} className="w-8 h-8 md:w-10 md:h-10" />
+                      <div>
+                        <div className="text-lg md:text-xl font-extrabold text-slate-900">{symbol}</div>
+                        <div className="text-sm text-slate-500 font-medium leading-tight">{t("balance")}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-base md:text-lg font-bold text-slate-800 tabular-nums">
                         {Number(balance).toLocaleString(undefined, {
                           minimumFractionDigits: symbol === "BTC" ? 6 : 2,
                           maximumFractionDigits: symbol === "BTC" ? 8 : 6,
                         })}
-                      </td>
-                      <td className="py-3 px-4 text-right tabular-nums font-semibold text-slate-900">
+                      </div>
+                      <div className="text-xs text-slate-600 font-medium leading-tight">
                         {(() => {
                           const p = prices[symbol] ?? (symbol === "USDT" ? 1 : undefined);
                           return p !== undefined ? fmtUSD(Number(balance) * p) : "--";
                         })()}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-2">
-                          <button
-                            className="h-10 px-4 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition"
-                            onClick={() => { setSelectedDepositCoin(symbol); openModal("deposit", symbol); }}
-                          >
-                            <span className="inline-flex items-center gap-1"><Icon name="download" />{t("deposit")}</span>
-                          </button>
-                          <button
-                            className="h-10 px-4 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-                            onClick={() => openModal("withdraw", symbol)}
-                          >
-                            <span className="inline-flex items-center gap-1"><Icon name="upload" />{t("withdraw")}</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
         </div>
 
-        {/* ===== Convert section ===== */}
+        {/* ===== Polished Convert section ===== */}
         <Card id="convert-section" className="mt-8 rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden">
-          <div className="bg-gradient-to-r from-fuchsia-50 via-sky-50 to-emerald-50 px-5 py-5 md:px-6 md:py-6">
+          <div className="relative z-10 p-5 md:p-6 bg-gradient-to-br from-fuchsia-50 via-sky-50 to-emerald-50">
             <div className="flex items-center gap-2 text-slate-800 text-xl md:text-2xl font-extrabold">
               <Icon name="swap" className="w-7 h-7" /> {t("convert_crypto")}
             </div>
           </div>
-          <div className="px-6 py-6">
-            <form onSubmit={handleConvert} className="flex flex-col gap-5">
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="flex-1">
-                  <label className="text-slate-600 font-medium mb-2 block">{t("from")}</label>
+          <div className="px-5 py-5 md:px-6 md:py-6 relative z-10">
+            <form onSubmit={handleConvert} className="space-y-4">
+              <div className="flex flex-col gap-4 relative">
+                <div className="relative">
+                  <div className="text-sm text-slate-600 font-medium mb-1">{t("from")}</div>
                   <select
                     value={fromCoin}
                     onChange={e => {
                       setFromCoin(e.target.value);
                       if (e.target.value === "USDT") setToCoin("BTC"); else setToCoin("USDT");
                     }}
-                    className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
+                    className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none transition-colors"
                   >
                     {coinSymbols.map(c => (<option key={c} value={c}>{c}</option>))}
                   </select>
                 </div>
 
-                <button type="button" onClick={swap} className="self-end md:self-auto h-12 mt-2 md:mt-7 rounded-xl bg-slate-900 text-white px-4 hover:scale-[1.02] transition">
-                  <Icon name="swap" />
-                </button>
+                <div className="flex items-center justify-center -my-2">
+                  <button
+                    type="button"
+                    onClick={swap}
+                    className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 text-white shadow-md hover:bg-slate-900 transition-all duration-200 ease-in-out transform hover:scale-105"
+                    aria-label="Swap currencies"
+                  >
+                    <Icon name="swap" className="w-6 h-6" />
+                  </button>
+                </div>
 
-                <div className="flex-1">
-                  <label className="text-slate-600 font-medium mb-2 block">{t("to")}</label>
+                <div className="relative">
+                  <div className="text-sm text-slate-600 font-medium mb-1">{t("to")}</div>
                   <select
                     value={toCoin}
                     onChange={e => setToCoin(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
+                    className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none transition-colors"
                   >
                     {fromCoin === "USDT"
                       ? coinSymbols.filter(c => c !== "USDT").map(c => <option key={c} value={c}>{c}</option>)

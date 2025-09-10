@@ -5,7 +5,7 @@ import React from "react";
 const icons = {
   "arrow-bottom": "M13 5a1 1 0 1 0-2 0v11.586l-5.293-5.293a1 1 0 0 0-1.414 1.414l7 7a1 1 0 0 0 1.414 0l7-7a1 1 0 0 0-1.414-1.414L13 16.586V5z",
   "arrow-left": "M10.707 6.707a1 1 0 0 0-1.414-1.414l-6 6a1 1 0 0 0 0 1.414l6 6a1 1 0 0 0 1.414-1.414L6.414 13H20a1 1 0 1 0 0-2H6.414l4.293-4.293z",
-  
+  "swap": "M16.5 13.5h-9a.5.5 0 0 1 0-1h9a.5.5 0 0 1 0 1zm-9-4h9a.5.5 0 0 0 0-1h-9a.5.5 0 0 0 0 1zm0 0",
   // Icons for the new bottom navigation bar
   "home": "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z",
 
