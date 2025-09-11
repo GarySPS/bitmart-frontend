@@ -1,25 +1,17 @@
 // src/index.js
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './globals.css';
 import App from './App';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration'; // This line is important
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <App />
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
 );
 
-// Simple and direct service worker registration
-if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-  window.addEventListener('load', () => {
-    const swUrl = '/service-worker.js';
-    navigator.serviceWorker
-      .register(swUrl)
-      .then(registration => {
-        console.log('Service Worker registered:', registration);
-      })
-      .catch(error => {
-        console.error('Service Worker registration failed:', error);
-      });
-  });
-}
+// This line correctly calls the function to register the service worker
+serviceWorkerRegistration.register();
