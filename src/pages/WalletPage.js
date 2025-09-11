@@ -1,6 +1,6 @@
 import { MAIN_API_BASE, ADMIN_API_BASE } from '../config';
 import { jwtDecode } from "jwt-decode";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import axios from "axios";
@@ -19,6 +19,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 /* ---------------- helpers (UI only) ---------------- */
 const coinSymbols = ["USDT", "BTC", "ETH", "SOL", "XRP", "TON"];
 const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ERC20", SOL: "SOL", XRP: "XRP", TON: "TON" };
+const usdtNetworks = ["TRC20", "BEP20", "ERC20"];
 const fmtUSD = (n) => "$" + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /* ---------------- uploads ---------------- */
@@ -32,13 +33,6 @@ async function uploadDepositScreenshot(file, userId) {
   if (error) throw error;
   return filePath;
 }
-async function getSignedUrl(path, bucket) {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const filename = path.split('/').pop();
-  const res = await axios.get(`${MAIN_API_BASE}/upload/${bucket}/signed-url/${filename}`);
-  return res.data.url;
-}
 
 export default function WalletPage() {
   const navigate = useNavigate();
@@ -48,17 +42,6 @@ export default function WalletPage() {
 
   const [userId, setUserId] = useState(null);
   const [prices, setPrices] = useState({});
-  // preload last known prices so page never starts at $0
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("nc_prices");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") setPrices(parsed);
-      }
-    } catch {}
-  }, []);
-
   const [balances, setBalances] = useState([]);
   const [depositHistory, setDepositHistory] = useState([]);
   const [withdrawHistory, setWithdrawHistory] = useState([]);
@@ -76,27 +59,52 @@ export default function WalletPage() {
   const [amount, setAmount] = useState("");
   const [result, setResult] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [walletAddresses, setWalletAddresses] = useState({});
-  const [walletQRCodes, setWalletQRCodes] = useState({});
+  const [depositInfo, setDepositInfo] = useState({});
   const [fileLocked, setFileLocked] = useState(false);
+  const [selectedUsdtNetwork, setSelectedUsdtNetwork] = useState("TRC20");
   const [authChecked, setAuthChecked] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
-  const [historyScreenshots, setHistoryScreenshots] = useState({});
   const [totalUsd, setTotalUsd] = useState(0);
-  // lock + inline toasts
-const [depositBusy, setDepositBusy] = useState(false);
-const [withdrawBusy, setWithdrawBusy] = useState(false);
-const [depositToast, setDepositToast] = useState("");
-const [withdrawToast, setWithdrawToast] = useState("");
+  const [depositBusy, setDepositBusy] = useState(false);
+  const [withdrawBusy, setWithdrawBusy] = useState(false);
+  const [depositToast, setDepositToast] = useState("");
+  const [withdrawToast, setWithdrawToast] = useState("");
 
+  const fetchBalances = useCallback(() => {
+    if (!token || !userId) return;
+    axios.get(`${MAIN_API_BASE}/balance`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setBalances(res.data.assets || []))
+      .catch(() => setBalances([]));
+  }, [token, userId]);
 
-  /* ---------------- history merge (unchanged logic) ---------------- */
+  const activeDepositInfo = useMemo(() => {
+    if (!depositInfo[selectedDepositCoin]) return { address: t("wallet_address_loading"), qr: null };
+    
+    if (selectedDepositCoin === 'USDT') {
+      return depositInfo.USDT?.[selectedUsdtNetwork] || { address: t("wallet_address_unavailable"), qr: null };
+    }
+    
+    const network = depositNetworks[selectedDepositCoin];
+    return depositInfo[selectedDepositCoin]?.[network] || { address: t("wallet_address_unavailable"), qr: null };
+  }, [selectedDepositCoin, selectedUsdtNetwork, depositInfo, t]);
+
+  // preload last known prices so page never starts at $0
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("nc_prices");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") setPrices(parsed);
+      }
+    } catch {}
+  }, []);
+
   const userDepositHistory = depositHistory.filter(d => userId && Number(d.user_id) === Number(userId));
   const userWithdrawHistory = withdrawHistory.filter(w => userId && Number(w.user_id) === Number(userId));
-  const allHistory = [
+  const allHistory = useMemo(() => [
     ...userDepositHistory.map(d => ({ ...d, type: "Deposit" })),
     ...userWithdrawHistory.map(w => ({ ...w, type: "Withdraw" })),
-  ].sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
+  ].sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)), [userDepositHistory, userWithdrawHistory]);
 
   useEffect(() => {
     if (!balances.length) { setTotalUsd(0); return; }
@@ -108,27 +116,7 @@ const [withdrawToast, setWithdrawToast] = useState("");
     });
     setTotalUsd(sum);
   }, [balances, prices]);
-
-  useEffect(() => {
-    async function fetchHistoryScreenshots() {
-      let shots = {};
-      for (let row of allHistory) {
-        if (row.screenshot) {
-          if (!row.screenshot.includes("/")) {
-            shots[row.id] = `https://zgnefojwdijycgcqngke.supabase.co/storage/v1/object/public/deposit/${encodeURIComponent(row.screenshot)}`;
-          } else if (row.screenshot.startsWith("/uploads/")) {
-            shots[row.id] = `${MAIN_API_BASE}${row.screenshot}`;
-          } else if (row.screenshot.startsWith("http")) {
-            shots[row.id] = row.screenshot;
-          }
-        }
-      }
-      setHistoryScreenshots(shots);
-    }
-    fetchHistoryScreenshots();
-  }, [JSON.stringify(allHistory)]);
-
-  /* ---------------- auth / redirects (unchanged) ---------------- */
+  
   useEffect(() => {
     if (token) {
       try {
@@ -145,7 +133,7 @@ const [withdrawToast, setWithdrawToast] = useState("");
 
   useEffect(() => {
     if (!authChecked) return;
-    if (!token || token === "undefined" || !userId || userId === "undefined") {
+    if (!token || token === "undefined" || !userId || typeof userId === "undefined") {
       setIsGuest(true);
     }
   }, [authChecked, token, userId]);
@@ -157,7 +145,6 @@ const [withdrawToast, setWithdrawToast] = useState("");
     }
   }, [authChecked, isGuest, navigate]);
 
-  /* ---------------- live prices (unchanged) ---------------- */
   useEffect(() => {
     let stopped = false;
     const load = async () => {
@@ -183,7 +170,7 @@ const [withdrawToast, setWithdrawToast] = useState("");
     load();
     const id = setInterval(load, 10_000);
     return () => { stopped = true; clearInterval(id); };
-  }, [MAIN_API_BASE]);
+  }, []);
 
   useEffect(() => {
     let canceled = false;
@@ -208,31 +195,34 @@ const [withdrawToast, setWithdrawToast] = useState("");
     refreshPair();
     const id = setInterval(refreshPair, 10_000);
     return () => { canceled = true; clearInterval(id); };
-  }, [fromCoin, toCoin, MAIN_API_BASE]);
+  }, [fromCoin, toCoin]);
 
-  /* ---------------- wallet & histories (unchanged) ---------------- */
   useEffect(() => {
     axios.get(`${MAIN_API_BASE}/deposit-addresses`)
       .then(res => {
-        console.log("RECEIVED DEPOSIT ADDRESSES:", res.data);
-        const addresses = {};
-        const qrcodes = {};
+        const info = {};
         res.data.forEach(row => {
-          addresses[row.coin] = row.address;
-          if (row.qr_url && row.qr_url.startsWith("/uploads")) {
-            qrcodes[row.coin] = `${ADMIN_API_BASE}${row.qr_url}`;
-          } else if (row.qr_url) {
-            qrcodes[row.coin] = row.qr_url;
-          } else {
-            qrcodes[row.coin] = null;
+          if (!info[row.coin]) {
+            info[row.coin] = {};
           }
+          const network = row.network || row.coin;
+          
+          let qrUrl = null;
+          if (row.qr_url && row.qr_url.startsWith("/uploads")) {
+            qrUrl = `${ADMIN_API_BASE}${row.qr_url}`;
+          } else if (row.qr_url) {
+            qrUrl = row.qr_url;
+          }
+
+          info[row.coin][network] = {
+            address: row.address,
+            qr: qrUrl,
+          };
         });
-        setWalletAddresses(addresses);
-        setWalletQRCodes(qrcodes);
+        setDepositInfo(info);
       })
       .catch(() => {
-        setWalletAddresses({});
-        setWalletQRCodes({});
+        setDepositInfo({});
       });
   }, []);
 
@@ -243,7 +233,10 @@ const [withdrawToast, setWithdrawToast] = useState("");
       .then(res => setDepositHistory(res.data)).catch(() => setDepositHistory([]));
     axios.get(`${MAIN_API_BASE}/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setWithdrawHistory(res.data)).catch(() => setWithdrawHistory([]));
-  }, [token, userId]);
+  }, [token, userId, fetchBalances]);
+
+  const openModal = useCallback((type, coin) => setModal({ open: true, type, coin }), []);
+  const closeModal = () => setModal({ open: false, type: "", coin: "" });
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -255,7 +248,7 @@ const [withdrawToast, setWithdrawToast] = useState("");
       const el = document.getElementById("convert-section");
       if (el) el.scrollIntoView({ behavior: "smooth" });
     }
-  }, [location]);
+  }, [location, openModal]);
 
   useEffect(() => {
     if (toast) { const t = setTimeout(() => setToast(""), 1200); return () => clearTimeout(t); }
@@ -270,89 +263,83 @@ const [withdrawToast, setWithdrawToast] = useState("");
     setResult(receive.toFixed(toCoin === "BTC" ? 6 : toCoin === "ETH" ? 4 : 3));
   }, [fromCoin, toCoin, amount, prices]);
 
-  function fetchBalances() {
-    if (!token || !userId) return;
-    axios.get(`${MAIN_API_BASE}/balance`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setBalances(res.data.assets || []))
-      .catch(() => setBalances([]));
-  }
+  const handleDepositSubmit = async (e) => {
+    e.preventDefault();
+    if (depositBusy) return;
+    setDepositBusy(true);
 
-  const openModal = (type, coin) => setModal({ open: true, type, coin });
-  const closeModal = () => setModal({ open: false, type: "", coin: "" });
-
-const handleDepositSubmit = async (e) => {
-  e.preventDefault();
-  if (depositBusy) return;
-  setDepositBusy(true);
-
-  const depositAddress = walletAddresses[selectedDepositCoin];
-  if (!depositAddress) {
-    setDepositToast("Deposit address not found. Contact support.");
-    setTimeout(() => setDepositToast(""), 2500);
-    setDepositBusy(false);
-    return;
-  }
-
-  try {
-    let screenshotUrl = null;
-    if (depositScreenshot) {
-      screenshotUrl = await uploadDepositScreenshot(depositScreenshot, userId);
+    const depositAddress = activeDepositInfo.address;
+    if (!depositAddress || depositAddress.includes("unavailable") || depositAddress.includes("loading")) {
+      setDepositToast("Deposit address not found. Contact support.");
+      setTimeout(() => setDepositToast(""), 2500);
+      setDepositBusy(false);
+      return;
     }
-    await axios.post(`${MAIN_API_BASE}/deposit`, {
-      coin: selectedDepositCoin,
-      amount: depositAmount,
-      address: depositAddress,
-      screenshot: screenshotUrl,
-    }, { headers: { Authorization: `Bearer ${token}` } });
 
-    setDepositToast(t("Deposit Submitted") || "Deposit Submitted");
-    setDepositAmount("");
-    setDepositScreenshot(null);
-    setFileLocked(false);
+    const network = selectedDepositCoin === 'USDT' 
+      ? selectedUsdtNetwork 
+      : depositNetworks[selectedDepositCoin];
 
-    // refresh list
-    axios.get(`${MAIN_API_BASE}/deposits`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setDepositHistory(res.data));
+    try {
+      let screenshotUrl = null;
+      if (depositScreenshot) {
+        screenshotUrl = await uploadDepositScreenshot(depositScreenshot, userId);
+      }
+      await axios.post(`${MAIN_API_BASE}/deposit`, {
+        coin: selectedDepositCoin,
+        amount: depositAmount,
+        address: depositAddress,
+        screenshot: screenshotUrl,
+        network: network,
+      }, { headers: { Authorization: `Bearer ${token}` } });
 
-    // close after short delay
-    setTimeout(() => { setDepositToast(""); closeModal(); }, 1400);
-  } catch (err) {
-    const errorMsg = err.response?.data?.error || t("deposit_failed");
-    setDepositToast(errorMsg);
-    console.error("Deposit submission error:", err);
-    setTimeout(() => setDepositToast(""), 2500);
-  } finally {
-    setDepositBusy(false);
-  }
-};
-const handleWithdraw = async (e) => {
-  e.preventDefault();
-  if (withdrawBusy) return;
-  setWithdrawBusy(true);
-  try {
-    const res = await axios.post(`${MAIN_API_BASE}/withdraw`, {
-      user_id: userId,
-      coin: selectedWithdrawCoin,
-      amount: withdrawForm.amount,
-      address: withdrawForm.address,
-    }, { headers: { Authorization: `Bearer ${token}` } });
+      setDepositToast(t("Deposit Submitted") || "Deposit Submitted");
+      setDepositAmount("");
+      setDepositScreenshot(null);
+      setFileLocked(false);
+      
+      axios.get(`${MAIN_API_BASE}/deposits`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setDepositHistory(res.data));
 
-    if (res.data && res.data.success) {
-      setWithdrawToast(t("Withdraw Submitted") || "Withdraw Submitted");
-      axios.get(`${MAIN_API_BASE}/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => setWithdrawHistory(r.data));
-      fetchBalances();
-    } else {
-      setWithdrawToast(t("withdraw_failed"));
+      setTimeout(() => { setDepositToast(""); closeModal(); }, 1400);
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || t("deposit_failed");
+      setDepositToast(errorMsg);
+      console.error("Deposit submission error:", err);
+      setTimeout(() => setDepositToast(""), 2500);
+    } finally {
+      setDepositBusy(false);
     }
-  } catch (err) {
-    setWithdrawToast(err.response?.data?.error || t("withdraw_failed"));
-    console.error(err);
-  } finally {
-    setTimeout(() => { setWithdrawForm({ address: "", amount: "" }); setWithdrawToast(""); closeModal(); }, 1400);
-    setWithdrawBusy(false);
-  }
-};
+  };
+  
+  const handleWithdraw = async (e) => {
+    e.preventDefault();
+    if (withdrawBusy) return;
+    setWithdrawBusy(true);
+    try {
+      const res = await axios.post(`${MAIN_API_BASE}/withdraw`, {
+        user_id: userId,
+        coin: selectedWithdrawCoin,
+        amount: withdrawForm.amount,
+        address: withdrawForm.address,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      if (res.data && res.data.success) {
+        setWithdrawToast(t("Withdraw Submitted") || "Withdraw Submitted");
+        axios.get(`${MAIN_API_BASE}/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => setWithdrawHistory(r.data));
+        fetchBalances();
+      } else {
+        setWithdrawToast(t("withdraw_failed"));
+      }
+    } catch (err) {
+      setWithdrawToast(err.response?.data?.error || t("withdraw_failed"));
+      console.error(err);
+    } finally {
+      setTimeout(() => { setWithdrawForm({ address: "", amount: "" }); setWithdrawToast(""); closeModal(); }, 1400);
+      setWithdrawBusy(false);
+    }
+  };
 
   const swap = () => { setFromCoin(toCoin); setToCoin(fromCoin); setAmount(""); setResult(""); };
 
@@ -380,9 +367,7 @@ const handleWithdraw = async (e) => {
     setAmount(""); setResult("");
   };
 
-  // --- MAIN RENDER ---
-  if (!authChecked) return null;
-  if (isGuest) return null;
+  if (!authChecked || isGuest) return null;
 
   return (
     <div
@@ -392,7 +377,6 @@ const handleWithdraw = async (e) => {
         backgroundSize: "cover",
       }}
     >
-      {/* overlay */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -401,55 +385,42 @@ const handleWithdraw = async (e) => {
         }}
       />
       <div style={{ position: "relative", zIndex: 1 }} className="w-full max-w-7xl">
-        {/* ===== Top row: balance + assets ===== */}
-<div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(320px,380px),1fr] gap-6 md:gap-8 items-stretch">
-
-<Card className="rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden h-full">
-  <div className="w-full h-full min-h-[180px] md:min-h-[220px] flex items-center justify-center
-                   px-4 sm:px-6 bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50">
-    <div className="flex flex-col items-center gap-1 w-full">
-      <div className="text-center text-slate-500 text-xs sm:text-sm font-semibold">
-        {t("total_balance")}
-      </div>
-
-      {/* key: clamp + break-all + leading + full width */}
-      <div
-        className="
-          w-full max-w-full px-1 text-center font-extrabold text-slate-900 tabular-nums
-          leading-[1.1] tracking-tight break-all
-          text-[clamp(1.5rem,5.2vw,2.75rem)]
-        "
-      >
-        {fmtUSD(totalUsd)}
-      </div>
-
-      {/* --- Add this section for the buttons --- */}
-      <div className="mt-4 flex gap-4 w-full justify-center">
-        <button
-          className="h-10 px-6 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition"
-          onClick={() => openModal("deposit", "USDT")}
-        >
-          <span className="inline-flex items-center gap-1"><Icon name="download" />{t("deposit")}</span>
-        </button>
-        <button
-          className="h-10 px-6 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-          onClick={() => openModal("withdraw", "USDT")}
-        >
-          <span className="inline-flex items-center gap-1"><Icon name="upload" />{t("withdraw")}</span>
-        </button>
-      </div>
-      {/* -------------------------------------- */}
-    </div>
-  </div>
-</Card>
-
-          {/* Assets polished list */}
+        <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(320px,380px),1fr] gap-6 md:gap-8 items-stretch">
+          <Card className="rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden h-full">
+            <div className="w-full h-full min-h-[180px] md:min-h-[220px] flex items-center justify-center
+                        px-4 sm:px-6 bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50">
+              <div className="flex flex-col items-center gap-1 w-full">
+                <div className="text-center text-slate-500 text-xs sm:text-sm font-semibold">
+                  {t("total_balance")}
+                </div>
+                <div
+                  className="w-full max-w-full px-1 text-center font-extrabold text-slate-900 tabular-nums leading-[1.1] tracking-tight break-all text-[clamp(1.5rem,5.2vw,2.75rem)]"
+                >
+                  {fmtUSD(totalUsd)}
+                </div>
+                <div className="mt-4 flex gap-4 w-full justify-center">
+                  <button
+                    className="h-10 px-6 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition"
+                    onClick={() => openModal("deposit", "USDT")}
+                  >
+                    <span className="inline-flex items-center gap-1"><Icon name="download" />{t("deposit")}</span>
+                  </button>
+                  <button
+                    className="h-10 px-6 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                    onClick={() => openModal("withdraw", "USDT")}
+                  >
+                    <span className="inline-flex items-center gap-1"><Icon name="upload" />{t("withdraw")}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Card>
           <Card className="rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden">
             <div className="px-5 py-5">
               <div className="text-slate-700 font-semibold">{t("my_assets")}</div>
             </div>
             <div className="flex flex-col gap-2 p-3">
-              {balances.map(({ symbol, icon, balance }) => (
+              {balances.map(({ symbol, balance }) => (
                 <div
                   key={symbol}
                   className="w-full bg-white rounded-2xl ring-1 ring-slate-100 hover:bg-slate-50/60 transition-colors p-4 md:p-5"
@@ -482,8 +453,6 @@ const handleWithdraw = async (e) => {
             </div>
           </Card>
         </div>
-
-        {/* ===== Polished Convert section ===== */}
         <Card id="convert-section" className="mt-8 rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden">
           <div className="relative z-10 p-5 md:p-6 bg-gradient-to-br from-fuchsia-50 via-sky-50 to-emerald-50">
             <div className="flex items-center gap-2 text-slate-800 text-xl md:text-2xl font-extrabold">
@@ -506,7 +475,6 @@ const handleWithdraw = async (e) => {
                     {coinSymbols.map(c => (<option key={c} value={c}>{c}</option>))}
                   </select>
                 </div>
-
                 <div className="flex items-center justify-center -my-2">
                   <button
                     type="button"
@@ -517,7 +485,6 @@ const handleWithdraw = async (e) => {
                     <Icon name="swap" className="w-6 h-6" />
                   </button>
                 </div>
-
                 <div className="relative">
                   <div className="text-sm text-slate-600 font-medium mb-1">{t("to")}</div>
                   <select
@@ -531,7 +498,6 @@ const handleWithdraw = async (e) => {
                   </select>
                 </div>
               </div>
-
               <Field
                 label={t("amount_with_coin", { coin: fromCoin })}
                 type="number"
@@ -542,14 +508,12 @@ const handleWithdraw = async (e) => {
                 placeholder={t("enter_amount_with_coin", { coin: fromCoin })}
                 icon="dollar-sign"
               />
-
               <div className="rounded-xl bg-slate-50 ring-1 ring-slate-200 px-4 py-3 text-slate-700 font-medium">
                 {t("you_will_receive")}:&nbsp;
                 <span className="font-extrabold text-slate-900">
                   {result ? `${result} ${toCoin}` : "--"}
                 </span>
               </div>
-
               <button
                 type="submit"
                 className="w-full h-12 rounded-xl bg-slate-900 text-white text-lg font-extrabold hover:scale-[1.02] transition"
@@ -557,7 +521,6 @@ const handleWithdraw = async (e) => {
               >
                 {t("convert")}
               </button>
-
               {successMsg && (
                 <div className="mt-2 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 rounded-lg px-4 py-3 text-center text-base font-semibold">
                   {successMsg}
@@ -566,8 +529,6 @@ const handleWithdraw = async (e) => {
             </form>
           </div>
         </Card>
-
-        {/* ===== History ===== */}
         <Card className="mt-8 rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden">
           <div className="px-5 py-4 md:px-6 md:py-5 bg-white/80">
             <div className="flex items-center gap-2 text-slate-800 text-xl font-extrabold">
@@ -620,14 +581,11 @@ const handleWithdraw = async (e) => {
           </div>
         </Card>
       </div>
-
-      {/* ===== Modals ===== */}
       <Modal visible={modal.open && modal.type === "deposit"} onClose={closeModal}>
         <form onSubmit={handleDepositSubmit} className="space-y-5 p-2">
           <div className="text-2xl font-bold mb-3 flex items-center gap-2 text-slate-900">
             <Icon name="download" className="w-7 h-7" /> {t("deposit")}
           </div>
-
           <select
             className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
             value={selectedDepositCoin}
@@ -635,40 +593,46 @@ const handleWithdraw = async (e) => {
           >
             {coinSymbols.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-
           <div className="flex flex-col items-center justify-center">
             <div className="relative w-full max-w-[160px] aspect-square mb-3 rounded-xl bg-white ring-1 ring-slate-200 flex items-center justify-center overflow-hidden">
-              {walletQRCodes[selectedDepositCoin] ? (
+              {activeDepositInfo.qr ? (
                 <img
-                  src={walletQRCodes[selectedDepositCoin].startsWith("/uploads")
-                    ? `${ADMIN_API_BASE}${walletQRCodes[selectedDepositCoin]}`
-                    : walletQRCodes[selectedDepositCoin]}
+                  src={activeDepositInfo.qr}
                   alt={t("deposit_qr")}
                   className="max-w-full max-h-full object-contain p-2"
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                 />
-              ) : null}
-              {!walletQRCodes[selectedDepositCoin] && (
-                <QRCodeCanvas value={walletAddresses[selectedDepositCoin] || ""} size={140} bgColor="#ffffff" fgColor="#000000" />
+              ) : (
+                <QRCodeCanvas value={activeDepositInfo.address || ""} size={140} bgColor="#ffffff" fgColor="#000000" />
               )}
             </div>
           </div>
-
-          <div className="text-slate-600 font-medium">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
-
+          {selectedDepositCoin === 'USDT' ? (
+            <div>
+              <label className="block text-slate-600 font-medium mb-1">{t("network")}</label>
+              <select
+                className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
+                value={selectedUsdtNetwork}
+                onChange={e => setSelectedUsdtNetwork(e.target.value)}
+              >
+                {usdtNetworks.map(net => <option key={net} value={net}>{net}</option>)}
+              </select>
+            </div>
+          ) : (
+            <div className="text-slate-600 font-medium">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
+          )}
           <div className="flex items-center gap-2 justify-center">
             <span className="font-mono bg-slate-50 ring-1 ring-slate-200 px-2 py-1 rounded text-sm max-w-[260px] overflow-x-auto">
-              {walletAddresses[selectedDepositCoin]}
+              {activeDepositInfo.address}
             </span>
             <button
               type="button"
               className="h-9 px-3 rounded-lg bg-slate-900 text-white text-sm font-semibold"
-              onClick={() => { navigator.clipboard.writeText(walletAddresses[selectedDepositCoin]); setDepositToast(t("copied")); }}
+              onClick={() => { navigator.clipboard.writeText(activeDepositInfo.address); setDepositToast(t("copied")); }}
             >
               <span className="inline-flex items-center gap-1"><Icon name="copy" />{t("copy")}</span>
             </button>
           </div>
-
           <Field
             label={t("deposit_amount_with_coin", { coin: selectedDepositCoin })}
             type="number"
@@ -679,7 +643,6 @@ const handleWithdraw = async (e) => {
             required
             icon="dollar-sign"
           />
-
           <div>
             <label className="block text-slate-600 font-medium mb-1">{t("upload_screenshot")}</label>
             <div className="relative">
@@ -697,35 +660,31 @@ const handleWithdraw = async (e) => {
               </div>
             </div>
           </div>
-
           <div className="text-sm text-slate-600 bg-slate-50 ring-1 ring-slate-200 rounded px-3 py-2">
             {t("for_your_safety_submit_screenshot")}
             <span className="block text-amber-600">{t("proof_ensures_support")}</span>
           </div>
-
-<div className="relative">
-  <button
-    type="submit"
-    disabled={depositBusy || !depositAmount || !depositScreenshot}
-    className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition
-      ${depositBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
-  >
-    {depositBusy ? (t("submitting") || "Submitting...") : t("submit")}
-  </button>
-
-  {depositToast && (
-    <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-[70]">
-      <div className="flex items-center gap-2 px-4 py-2 rounded-2xl shadow-2xl
-                      bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
-        <Icon name="check" className="w-5 h-5" />
-        <span>{depositToast}</span>
-      </div>
-    </div>
-  )}
-</div>
+          <div className="relative">
+            <button
+              type="submit"
+              disabled={depositBusy || !depositAmount || !depositScreenshot}
+              className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition
+                ${depositBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
+            >
+              {depositBusy ? (t("submitting") || "Submitting...") : t("submit")}
+            </button>
+            {depositToast && (
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-[70]">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl shadow-2xl
+                                bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
+                  <Icon name="check" className="w-5 h-5" />
+                  <span>{depositToast}</span>
+                </div>
+              </div>
+            )}
+          </div>
         </form>
       </Modal>
-
       <Modal visible={modal.open && modal.type === "withdraw"} onClose={closeModal}>
         <form onSubmit={handleWithdraw} className="space-y-5 p-2">
           <div className="text-2xl font-bold mb-3 flex items-center gap-2 text-slate-900">
@@ -738,9 +697,7 @@ const handleWithdraw = async (e) => {
           >
             {coinSymbols.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-
           <div className="text-slate-600 font-medium">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
-
           <Field
             label={t("withdraw_to_address")}
             type="text"
@@ -761,30 +718,26 @@ const handleWithdraw = async (e) => {
             onChange={e => setWithdrawForm(f => ({ ...f, amount: e.target.value }))}
             icon="dollar-sign"
           />
-
           <div className="text-sm text-amber-700 bg-amber-50 ring-1 ring-amber-200 rounded px-3 py-2">{t("double_check_withdraw")}</div>
-
-<div className="relative">
-  <button
-    type="submit"
-    disabled={withdrawBusy || !withdrawForm.address || !withdrawForm.amount}
-    className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition
-      ${withdrawBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
-  >
-    {withdrawBusy ? (t("submitting") || "Submitting...") : t("submit_withdraw")}
-  </button>
-
-  {withdrawToast && (
-    <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-[70]">
-      <div className="flex items-center gap-2 px-4 py-2 rounded-2xl shadow-2xl
-                      bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
-        <Icon name="check" className="w-5 h-5" />
-        <span>{withdrawToast}</span>
-      </div>
-    </div>
-  )}
-</div>
-
+          <div className="relative">
+            <button
+              type="submit"
+              disabled={withdrawBusy || !withdrawForm.address || !withdrawForm.amount}
+              className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition
+                ${withdrawBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
+            >
+              {withdrawBusy ? (t("submitting") || "Submitting...") : t("submit_withdraw")}
+            </button>
+            {withdrawToast && (
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-[70]">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl shadow-2xl
+                                bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
+                  <Icon name="check" className="w-5 h-5" />
+                  <span>{withdrawToast}</span>
+                </div>
+              </div>
+            )}
+          </div>
           {withdrawMsg && (
             <div className="mt-2 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 rounded-lg px-4 py-2 text-center text-base font-semibold">
               {withdrawMsg}
@@ -792,7 +745,6 @@ const handleWithdraw = async (e) => {
           )}
         </form>
       </Modal>
-
-  </div>
+    </div>
   );
 }
