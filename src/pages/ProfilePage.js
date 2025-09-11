@@ -612,40 +612,51 @@ useEffect(() => {
               </select>
             </div>
 
-{/* Install Buttons */}
-<div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-  {/* Android */}
-  <button
-    className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition"
-    onClick={async () => {
-      if (isInstalled) {
-        alert('App is already installed.');
-        return;
-      }
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-        // clear so Chrome can re-fire later if needed
-        setDeferredPrompt(null);
-        if (choice?.outcome !== 'accepted') {
-          alert('Installation was dismissed. You can also use the browser menu → "Add to Home screen".');
-        }
-      } else {
-        alert('To install: open this site in Chrome/Brave/Opera on Android, then use the menu → "Add to Home screen".');
-      }
-    }}
-  >
-    <Icon name="download" className="mr-2" /> Android Install
-  </button>
+{/* Install App Section */}
+<div className="mt-5 grid grid-cols-1 gap-3">
+  {isInstalled ? (
+    // If the app is already installed, show a confirmation message
+    <div className="h-12 flex items-center justify-center rounded-xl font-bold bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200">
+      <Icon name="check-circle" className="mr-2" />
+      {t('app_installed', 'Application Installed')}
+    </div>
+  ) : (
+    <>
+      {/* Show Android/Desktop install button ONLY if the prompt is available */}
+      {deferredPrompt && !isIOSSafari() && (
+        <button
+          className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition flex items-center justify-center"
+          onClick={async () => {
+            deferredPrompt.prompt(); // This shows the browser's install dialog
+            // The `appinstalled` event listener will automatically update the UI
+            setDeferredPrompt(null); // The prompt can only be used once
+          }}
+        >
+          <Icon name="download" className="mr-2" /> {t('install_app', 'Install App')}
+        </button>
+      )}
 
-  {/* iOS */}
-  <button
-    className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition disabled:opacity-50"
-    onClick={() => navigate('/guide')}
-    disabled={!isIOSSafari()}
-  >
-    <Icon name="download" className="mr-2" /> iOS Install
-  </button>
+      {/* Show iOS install button ONLY on iOS Safari */}
+      {isIOSSafari() && (
+        <button
+          className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition flex items-center justify-center"
+          onClick={() => navigate('/guide')} // Navigate to a page with instructions
+        >
+          <Icon name="download" className="mr-2" /> {t('install_ios_guide', 'iOS Install Guide')}
+        </button>
+      )}
+
+      {/* Fallback button for browsers that might support installation but haven't provided the prompt yet */}
+      {!deferredPrompt && !isIOSSafari() && (
+         <button
+            className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition flex items-center justify-center"
+            onClick={() => alert(t('install_manual_guide', 'To install, please use the "Add to Home Screen" or "Install App" option in your browser\'s menu.'))}
+          >
+            <Icon name="download" className="mr-2" /> {t('install_app', 'Install App')}
+          </button>
+      )}
+    </>
+  )}
 </div>
 
           </Card>
