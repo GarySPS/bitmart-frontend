@@ -147,25 +147,17 @@ export default function LoginPage() {
             <div className="h-px w-full bg-gradient-to-r from-transparent via-[#dbe3ff] to-transparent" />
           </div>
 
-          {/* Support + Sign up */}
-          <div className="grid grid-cols-2 gap-2">
-            <a
-              href="https://wa.me/16627053615"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-xl px-3 py-2 text-center text-sm md:text-base font-bold text-white bg-[#25D366] hover:bg-[#22b95f] transition shadow"
-            >
-              WhatsApp
-            </a>
-            <a
-              href="https://t.me/bitmartsingapore"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-xl px-3 py-2 text-center text-sm md:text-base font-bold text-white bg-[#229ED9] hover:bg-[#178fca] transition shadow"
-            >
-              Telegram
-            </a>
-          </div>
+{/* Support */}
+<div className="grid grid-cols-1 gap-2">
+  <a
+    href="https://t.me/bitmartsingapore"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="rounded-xl px-3 py-2 text-center text-sm md:text-base font-bold text-white bg-[#229ED9] hover:bg-[#178fca] transition shadow"
+  >
+    Telegram
+  </a>
+</div>
 
 <div className="mt-5 flex justify-center">
   <Link

@@ -669,25 +669,19 @@ useEffect(() => {
           </Card>
 
           {/* Support */}
-          <Card className="p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/85 to-white/65 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.20)]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                className="h-12 rounded-xl font-bold text-white bg-[#25D366] hover:opacity-95 transition"
-                onClick={() => window.open('https://wa.me/16627053615', '_blank')}
-              >
-                WhatsApp
-              </button>
-              <button
-                className="h-12 rounded-xl font-bold text-white bg-[#229ED9] hover:opacity-95 transition"
-                onClick={() => window.open('https://t.me/bitmartsingapore', '_blank')}
-              >
-                Telegram
-              </button>
-            </div>
-            <div className="mt-3 text-sm text-slate-600 text-center">
-              {t("You can contact support via WhatsApp or Telegram, 9-5 office hours.")}
-            </div>
-          </Card>
+<Card className="p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/85 to-white/65 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.20)]">
+  <div className="grid grid-cols-1 gap-3">
+    <button
+      className="h-12 rounded-xl font-bold text-white bg-[#229ED9] hover:opacity-95 transition"
+      onClick={() => window.open('https://t.me/bitmartsingapore', '_blank')}
+    >
+      Telegram
+    </button>
+  </div>
+  <div className="mt-3 text-sm text-slate-600 text-center">
+    {t("You can contact support via Telegram, 9-5 office hours.")}
+  </div>
+</Card>
         </div>
       </div>
 

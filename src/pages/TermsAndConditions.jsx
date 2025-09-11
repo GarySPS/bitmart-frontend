@@ -150,19 +150,19 @@ export default function TermsAndConditions() {
             </ul>
           </section>
 
-          {/* Contact (keep a simple contact at bottom if needed) */}
-          <section>
-            <h2 className="text-lg font-semibold text-teal-300 mb-2">Contact</h2>
-            <p>
-              Support:{" "}
-              <a
-                href="https://wa.me/16627053615"
-                className="text-blue-400 underline"
-              >
-                WhatsApp +1 662 705 3615
-              </a>
-            </p>
-          </section>
+{/* Contact (keep a simple contact at bottom if needed) */}
+<section>
+  <h2 className="text-lg font-semibold text-teal-300 mb-2">Contact</h2>
+  <p>
+    Support:{" "}
+    <a
+      href="https://t.me/bitmartsingapore"
+      className="text-blue-400 underline"
+    >
+      Telegram Customer Support
+    </a>
+  </p>
+</section>
         </div>
       </div>
     </div>
