@@ -29,51 +29,57 @@ export default function Dashboard() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState("mcap"); // mcap | volume | change | price | name
 
-  /* ---------- prices (fetch >= 100) ---------- */
+  /* ---------- [OPTIMIZED] prices fetch ---------- */
   useEffect(() => {
+    // 1. Immediately try to load prices from localStorage for a fast initial render.
     try {
       const raw = localStorage.getItem("nc_coins");
-      if (raw) setCoins(JSON.parse(raw));
+      if (raw) {
+        const cachedCoins = JSON.parse(raw);
+        if (Array.isArray(cachedCoins) && cachedCoins.length > 0) {
+            setCoins(cachedCoins);
+            setLoading(false); // We have cached data, so we're not "loading" anymore.
+        }
+      }
     } catch {}
 
+    // 2. Define a single, reliable function to fetch fresh prices.
     const fetchPrices = async () => {
       try {
-        const urls = [
-          `${MAIN_API_BASE}/prices?limit=200`,
-          `${MAIN_API_BASE}/prices?limit=150`,
-          `${MAIN_API_BASE}/prices?limit=100`,
-          `${MAIN_API_BASE}/prices`,
-        ];
-        let freshCoins = [];
-        for (const u of urls) {
-          try {
-            const r = await fetch(u);
-            const j = await r.json();
-            const arr = j?.data || [];
-            if (arr.length > freshCoins.length) freshCoins = arr;
-            if (freshCoins.length >= 100) break;
-          } catch {}
+        // We only need to call one endpoint. The backend provides the full list.
+        const response = await fetch(`${MAIN_API_BASE}/prices`);
+        
+        // Check if the server responded with an error code like 503
+        if (!response.ok) {
+            console.error("Failed to fetch prices:", response.status, response.statusText);
+            // Don't update coins, just let the stale data (if any) remain.
+            return; 
         }
 
+        const data = await response.json();
+        const freshCoins = data?.data || [];
+
+        // 3. If we got new data, update the state and localStorage.
         if (freshCoins.length) {
-          setCoins(() => {
-            try {
-              localStorage.setItem("nc_coins", JSON.stringify(freshCoins));
-            } catch {}
-            return freshCoins;
-          });
+          setCoins(freshCoins);
+          localStorage.setItem("nc_coins", JSON.stringify(freshCoins));
         }
-      } catch {
-        /* keep last cache */
+      } catch (error) {
+        // This catches network errors (e.g., server is completely down).
+        console.error("Network error fetching prices:", error);
       } finally {
+        // Ensure loading is always turned off after the first attempt.
         setLoading(false);
       }
     };
 
+    // 4. Fetch immediately on component mount, then set an interval for updates.
     fetchPrices();
-    const interval = setInterval(fetchPrices, 12000);
+    const interval = setInterval(fetchPrices, 15000); // Fetch every 15 seconds
+
+    // 5. Clean up the interval when the component unmounts.
     return () => clearInterval(interval);
-  }, []);
+  }, []); // The empty dependency array ensures this runs only once on mount.
 
   /* ---------- news ---------- */
   useEffect(() => {
@@ -183,14 +189,14 @@ export default function Dashboard() {
   );
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center px-3 pt-3 pb-24"
-      style={{
-        background: 'url("/bitmart.jpg") no-repeat center/cover fixed',
-      }}
-    >
-      <div className="fixed inset-0 bg-[linear-gradient(120deg,#0b1020f0_0%,#0d1220d8_60%,#0a101dd1_100%)] pointer-events-none" />
-      <div className="relative z-10 w-full max-w-7xl mx-auto space-y-6">
+    <div
+      className="min-h-screen w-full flex flex-col items-center px-3 pt-3 pb-24"
+      style={{
+        background: 'url("/bitmart.jpg") no-repeat center/cover fixed',
+      }}
+    >
+      <div className="fixed inset-0 bg-[linear-gradient(120deg,#0b1020f0_0%,#0d1220d8_60%,#0a101dd1_100%)] pointer-events-none" />
+      <div className="relative z-10 w-full max-w-7xl mx-auto space-y-6">
 
         {/* ---- Market Ticker (Moved to top) ---- */}
         <MarketTicker allCoins={coins} />
@@ -265,10 +271,10 @@ export default function Dashboard() {
                       const change = typeof u.percent_change_24h === "number" ? u.percent_change_24h : null;
                       return (
                         <tr 
-                           key={coin.id || coin.symbol || idx} 
-                           className="group border-b border-slate-100 hover:bg-slate-100/80 transition-colors cursor-pointer" 
-                           style={{ height: 64 }} 
-                           onClick={() => navigate(`/trade/${coin.symbol}`)}
+                          key={coin.id || coin.symbol || idx} 
+                          className="group border-b border-slate-100 hover:bg-slate-100/80 transition-colors cursor-pointer" 
+                          style={{ height: 64 }} 
+                          onClick={() => navigate(`/trade/${coin.symbol}`)}
                         >
                           <td className="py-3 px-3">
                             <div className="flex items-center">
