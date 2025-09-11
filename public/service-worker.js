@@ -1,18 +1,26 @@
-// public/service-worker.js
+// src/index.js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './globals.css';
+import App from './App';
 
-// This is a minimal service worker. Its purpose is to exist,
-// which allows the PWA registration to succeed and removes the error.
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <App />
+);
 
-self.addEventListener('install', (event) => {
-  console.log('Service worker installed.');
-});
-
-self.addEventListener('activate', (event) => {
-  console.log('Service worker activated.');
-});
-
-self.addEventListener('fetch', (event) => {
-  // This service worker does not intercept fetch requests.
-  // It allows the browser to handle them as it normally would.
-  event.respondWith(fetch(event.request));
-});
+// Simple and direct service worker registration
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  window.addEventListener('load', () => {
+    // The path to the service-worker.js in your public folder
+    const swUrl = '/service-worker.js';
+    navigator.serviceWorker
+      .register(swUrl)
+      .then(registration => {
+        console.log('Service Worker registered:', registration);
+      })
+      .catch(error => {
+        console.error('Service Worker registration failed:', error);
+      });
+  });
+}
