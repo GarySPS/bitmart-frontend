@@ -258,24 +258,34 @@ useEffect(() => {
     setAvatarUrl(URL.createObjectURL(file));
   }
   async function saveAvatar() {
-    if (!avatarFile || !user?.id) return;
-    setAvatarSuccess(""); setAvatarError("");
-    try {
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append("avatar", avatarFile);
-      await axios.post(`${MAIN_API_BASE}/profile/avatar`, formData, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
-      });
-      const updated = await axios.get(`${MAIN_API_BASE}/profile`, { headers: { Authorization: `Bearer ${token}` } });
-      setUser(updated.data.user);
-      setAvatarFile(null);
-      setAvatarSuccess(t('profile_avatar_updated'));
-      setTimeout(() => { setAvatarSuccess(""); setShowEditPic(false); }, 1700);
-    } catch {
-      setAvatarError(t('profile_avatar_failed'));
-    }
-  }
+    if (!avatarFile || !user?.id) return;
+    setAvatarSuccess(""); setAvatarError("");
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("avatar", avatarFile);
+      
+      // 1. Capture the response from the POST request
+      const res = await axios.post(`${MAIN_API_BASE}/profile/avatar`, formData, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+      });
+
+      // 2. Use the new avatar URL from the response to update state directly
+      if (res.data && res.data.avatar) {
+        setUser(currentUser => ({
+          ...currentUser,
+          avatar: res.data.avatar,
+        }));
+        setAvatarUrl(res.data.avatar);
+      }
+      
+      setAvatarFile(null);
+      setAvatarSuccess(t('profile_avatar_updated'));
+      setTimeout(() => { setAvatarSuccess(""); setShowEditPic(false); }, 1700);
+    } catch {
+      setAvatarError(t('profile_avatar_failed'));
+    }
+  }
 
   async function handleChangePassword(e) {
     e.preventDefault();
