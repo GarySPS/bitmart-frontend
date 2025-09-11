@@ -183,8 +183,14 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="w-full flex flex-col items-center px-3 pt-3 pb-24 bg-slate-50/50">
-      <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div
+      className="min-h-screen w-full flex flex-col items-center px-3 pt-3 pb-24"
+      style={{
+        background: 'url("/bitmart.jpg") no-repeat center/cover fixed',
+      }}
+    >
+      <div className="fixed inset-0 bg-[linear-gradient(120deg,#0b1020f0_0%,#0d1220d8_60%,#0a101dd1_100%)] pointer-events-none" />
+      <div className="relative z-10 w-full max-w-7xl mx-auto space-y-6">
 
         {/* ---- Market Ticker (Moved to top) ---- */}
         <MarketTicker allCoins={coins} />
