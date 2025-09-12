@@ -418,7 +418,7 @@ useEffect(() => {
                 className="h-12 rounded-xl font-bold bg-slate-900 text-white hover:scale-[1.02] transition flex items-center justify-center"
                 onClick={() => navigate(`/wallet?action=convert`)}
               >
-                <Icon name="swap" className="mr-2" /> {t('profile_convert')}
+              {/* <Icon name="swap" className="mr-2" /> */} {t('profile_convert')}
               </button>
             </div>
           </Card>

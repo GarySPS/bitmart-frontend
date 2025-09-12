@@ -17,7 +17,15 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------------- helpers (UI only) ---------------- */
-const coinSymbols = ["USDT", "BTC", "ETH", "SOL", "XRP", "TON"];
+const coinData = [
+  { symbol: "USDT", name: "Tether" },
+  { symbol: "BTC", name: "Bitcoin" },
+  { symbol: "ETH", name: "Ethereum" },
+  { symbol: "SOL", name: "Solana" },
+  { symbol: "XRP", name: "Ripple" },
+  { symbol: "TON", name: "Toncoin" },
+];
+const coinSymbols = coinData.map(c => c.symbol); // Keep this line for other parts of the code that use the simple array
 const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ERC20", SOL: "SOL", XRP: "XRP", TON: "TON" };
 const usdtNetworks = ["TRC20", "BEP20", "ERC20"];
 const fmtUSD = (n) => "$" + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -69,6 +77,9 @@ export default function WalletPage() {
   const [withdrawBusy, setWithdrawBusy] = useState(false);
   const [depositToast, setDepositToast] = useState("");
   const [withdrawToast, setWithdrawToast] = useState("");
+  const [showConvertModal, setShowConvertModal] = useState(false); 
+  const [showCoinSelectionModal, setShowCoinSelectionModal] = useState(false);
+  const [showWithdrawCoinSelectionModal, setShowWithdrawCoinSelectionModal] = useState(false);
 
   const fetchBalances = useCallback(() => {
     if (!token || !userId) return;
@@ -245,8 +256,7 @@ export default function WalletPage() {
     if (action === "deposit" && coin) { setSelectedDepositCoin(coin); openModal("deposit", coin); }
     if (action === "withdraw" && coin) openModal("withdraw", coin);
     if (action === "convert") {
-      const el = document.getElementById("convert-section");
-      if (el) el.scrollIntoView({ behavior: "smooth" });
+      setShowConvertModal(true); // This now opens the modal
     }
   }, [location, openModal]);
 
@@ -398,20 +408,30 @@ export default function WalletPage() {
                 >
                   {fmtUSD(totalUsd)}
                 </div>
-                <div className="mt-4 flex gap-4 w-full justify-center">
-                  <button
-                    className="h-10 px-6 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition"
-                    onClick={() => openModal("deposit", "USDT")}
-                  >
-                    <span className="inline-flex items-center gap-1"><Icon name="download" />{t("deposit")}</span>
-                  </button>
-                  <button
-                    className="h-10 px-6 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-                    onClick={() => openModal("withdraw", "USDT")}
-                  >
-                    <span className="inline-flex items-center gap-1"><Icon name="upload" />{t("withdraw")}</span>
-                  </button>
-                </div>
+
+{/* --- Action Buttons --- */}
+<div className="mt-5 grid grid-cols-3 gap-3 w-full max-w-xs mx-auto">
+  <button
+    className="h-11 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-bold text-slate-800 hover:bg-slate-50 transition flex flex-col items-center justify-center"
+    onClick={() => setShowCoinSelectionModal(true)}
+  >
+    <Icon name="download" className="w-5 h-5 mb-0.5" />
+    <span>{t("deposit")}</span>
+  </button>
+  <button
+    className="h-11 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition flex flex-col items-center justify-center"
+    onClick={() => setShowWithdrawCoinSelectionModal(true)}
+  >
+    <Icon name="upload" className="w-5 h-5 mb-0.5" />
+    <span>{t("withdraw")}</span>
+  </button>
+  <button
+    className="h-11 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-bold text-slate-800 hover:bg-slate-50 transition flex flex-col items-center justify-center"
+    onClick={() => setShowConvertModal(true)}
+  >
+    <span>{t("convert")}</span>
+  </button>
+</div>
               </div>
             </div>
           </Card>
@@ -453,82 +473,7 @@ export default function WalletPage() {
             </div>
           </Card>
         </div>
-        <Card id="convert-section" className="mt-8 rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden">
-          <div className="relative z-10 p-5 md:p-6 bg-gradient-to-br from-fuchsia-50 via-sky-50 to-emerald-50">
-            <div className="flex items-center gap-2 text-slate-800 text-xl md:text-2xl font-extrabold">
-              <Icon name="swap" className="w-7 h-7" /> {t("convert_crypto")}
-            </div>
-          </div>
-          <div className="px-5 py-5 md:px-6 md:py-6 relative z-10">
-            <form onSubmit={handleConvert} className="space-y-4">
-              <div className="flex flex-col gap-4 relative">
-                <div className="relative">
-                  <div className="text-sm text-slate-600 font-medium mb-1">{t("from")}</div>
-                  <select
-                    value={fromCoin}
-                    onChange={e => {
-                      setFromCoin(e.target.value);
-                      if (e.target.value === "USDT") setToCoin("BTC"); else setToCoin("USDT");
-                    }}
-                    className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none transition-colors"
-                  >
-                    {coinSymbols.map(c => (<option key={c} value={c}>{c}</option>))}
-                  </select>
-                </div>
-                <div className="flex items-center justify-center -my-2">
-                  <button
-                    type="button"
-                    onClick={swap}
-                    className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 text-white shadow-md hover:bg-slate-900 transition-all duration-200 ease-in-out transform hover:scale-105"
-                    aria-label="Swap currencies"
-                  >
-                    <Icon name="swap" className="w-6 h-6" />
-                  </button>
-                </div>
-                <div className="relative">
-                  <div className="text-sm text-slate-600 font-medium mb-1">{t("to")}</div>
-                  <select
-                    value={toCoin}
-                    onChange={e => setToCoin(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none transition-colors"
-                  >
-                    {fromCoin === "USDT"
-                      ? coinSymbols.filter(c => c !== "USDT").map(c => <option key={c} value={c}>{c}</option>)
-                      : <option value="USDT">USDT</option>}
-                  </select>
-                </div>
-              </div>
-              <Field
-                label={t("amount_with_coin", { coin: fromCoin })}
-                type="number"
-                min={0}
-                step="any"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                placeholder={t("enter_amount_with_coin", { coin: fromCoin })}
-                icon="dollar-sign"
-              />
-              <div className="rounded-xl bg-slate-50 ring-1 ring-slate-200 px-4 py-3 text-slate-700 font-medium">
-                {t("you_will_receive")}:&nbsp;
-                <span className="font-extrabold text-slate-900">
-                  {result ? `${result} ${toCoin}` : "--"}
-                </span>
-              </div>
-              <button
-                type="submit"
-                className="w-full h-12 rounded-xl bg-slate-900 text-white text-lg font-extrabold hover:scale-[1.02] transition"
-                disabled={!amount || isNaN(amount) || fromCoin === toCoin || parseFloat(amount) <= 0}
-              >
-                {t("convert")}
-              </button>
-              {successMsg && (
-                <div className="mt-2 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 rounded-lg px-4 py-3 text-center text-base font-semibold">
-                  {successMsg}
-                </div>
-              )}
-            </form>
-          </div>
-        </Card>
+
         <Card className="mt-8 rounded-3xl shadow-xl border border-slate-100 p-0 overflow-hidden">
           <div className="px-5 py-4 md:px-6 md:py-5 bg-white/80">
             <div className="flex items-center gap-2 text-slate-800 text-xl font-extrabold">
@@ -581,35 +526,83 @@ export default function WalletPage() {
           </div>
         </Card>
       </div>
-      <Modal visible={modal.open && modal.type === "deposit"} onClose={closeModal}>
-        <form onSubmit={handleDepositSubmit} className="space-y-5 p-2">
-          <div className="text-2xl font-bold mb-3 flex items-center gap-2 text-slate-900">
-            <Icon name="download" className="w-7 h-7" /> {t("deposit")}
+
+      {/* ===== NEW COIN SELECTION MODAL ===== */}
+    <Modal visible={showCoinSelectionModal} onClose={() => setShowCoinSelectionModal(false)}>
+      <div className="p-1 w-full max-w-sm">
+        <h3 className="text-xl font-bold my-3 text-slate-900 text-center">{t('select_coin_to_deposit', 'Select Coin to Deposit')}</h3>
+        <div className="flex flex-col">
+          {coinData.map(({ symbol, name }) => (
+            <button
+              key={symbol}
+              onClick={() => {
+                setSelectedDepositCoin(symbol);
+                setShowCoinSelectionModal(false);
+                openModal('deposit', symbol);
+              }}
+              className="flex items-center w-full p-4 border-b border-slate-200 last:border-b-0 hover:bg-slate-50 transition text-left"
+            >
+              <Icon name={symbol.toLowerCase()} className="w-9 h-9 mr-4" />
+              <div className="flex-1">
+                <div className="font-bold text-slate-800">{name}</div>
+                <div className="text-sm text-slate-500">{symbol}</div>
+              </div>
+              <Icon name="chevron-right" className="w-5 h-5 text-slate-400" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </Modal>
+
+<Modal visible={showWithdrawCoinSelectionModal} onClose={() => setShowWithdrawCoinSelectionModal(false)}>
+  <div className="p-1 w-full max-w-sm">
+    <h3 className="text-xl font-bold my-3 text-slate-900 text-center">
+      {t('select_coin_to_withdraw', 'Select Coin to Withdraw')}
+    </h3>
+    <div className="flex flex-col">
+      {coinData.map(({ symbol, name }) => (
+        <button
+          key={symbol}
+          onClick={() => {
+            setSelectedWithdrawCoin(symbol);
+            setShowWithdrawCoinSelectionModal(false);
+            openModal('withdraw', symbol);
+          }}
+          className="flex items-center w-full p-4 border-b border-slate-200 last:border-b-0 hover:bg-slate-50 transition text-left"
+        >
+          <Icon name={symbol.toLowerCase()} className="w-9 h-9 mr-4" />
+          <div className="flex-1">
+            <div className="font-bold text-slate-800">{name}</div>
+            <div className="text-sm text-slate-500">{symbol}</div>
           </div>
-          <select
-            className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
-            value={selectedDepositCoin}
-            onChange={e => setSelectedDepositCoin(e.target.value)}
-          >
-            {coinSymbols.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <div className="flex flex-col items-center justify-center">
-            <div className="relative w-full max-w-[160px] aspect-square mb-3 rounded-xl bg-white ring-1 ring-slate-200 flex items-center justify-center overflow-hidden">
-              {activeDepositInfo.qr ? (
-                <img
-                  src={activeDepositInfo.qr}
-                  alt={t("deposit_qr")}
-                  className="max-w-full max-h-full object-contain p-2"
-                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                />
-              ) : (
-                <QRCodeCanvas value={activeDepositInfo.address || ""} size={140} bgColor="#ffffff" fgColor="#000000" />
-              )}
-            </div>
-          </div>
+          <Icon name="chevron-right" className="w-5 h-5 text-slate-400" />
+        </button>
+      ))}
+    </div>
+  </div>
+</Modal>
+
+
+    <Modal visible={modal.open && modal.type === "deposit"} onClose={closeModal}></Modal>
+
+    <Modal visible={modal.open && modal.type === "deposit"} onClose={closeModal}>
+      <form onSubmit={handleDepositSubmit} className="flex flex-col items-center p-3 text-center w-full max-w-xs mx-auto">
+        <div className="text-2xl font-bold mb-4 text-slate-900">
+          {t("deposit")}
+        </div>
+        
+        <div className="relative w-full max-w-[180px] aspect-square mb-4 rounded-2xl bg-white ring-1 ring-slate-200 flex items-center justify-center overflow-hidden p-3">
+          {activeDepositInfo.qr ? (
+            <img src={activeDepositInfo.qr} alt={t("deposit_qr")} className="max-w-full max-h-full object-contain" />
+          ) : (
+            <QRCodeCanvas value={activeDepositInfo.address || ""} size={160} bgColor="#ffffff" fgColor="#000000" />
+          )}
+        </div>
+
+        <div className="w-full space-y-4 text-left">
           {selectedDepositCoin === 'USDT' ? (
             <div>
-              <label className="block text-slate-600 font-medium mb-1">{t("network")}</label>
+              <label className="block text-slate-600 font-medium mb-1 text-sm">{t("network")}</label>
               <select
                 className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
                 value={selectedUsdtNetwork}
@@ -619,132 +612,204 @@ export default function WalletPage() {
               </select>
             </div>
           ) : (
-            <div className="text-slate-600 font-medium">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
+            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
           )}
-          <div className="flex items-center gap-2 justify-center">
-            <span className="font-mono bg-slate-50 ring-1 ring-slate-200 px-2 py-1 rounded text-sm max-w-[260px] overflow-x-auto">
-              {activeDepositInfo.address}
-            </span>
-            <button
-              type="button"
-              className="h-9 px-3 rounded-lg bg-slate-900 text-white text-sm font-semibold"
-              onClick={() => { navigator.clipboard.writeText(activeDepositInfo.address); setDepositToast(t("copied")); }}
-            >
-              <span className="inline-flex items-center gap-1"><Icon name="copy" />{t("copy")}</span>
-            </button>
-          </div>
+        </div>
+
+        <div className="text-slate-600 font-medium text-sm mt-4">{t("deposit_address", "Deposit Address")}</div>
+        <div className="flex items-center gap-2 justify-center mt-1 w-full">
+          <span className="font-mono bg-slate-100 ring-1 ring-slate-200 px-3 py-2 rounded-lg text-sm text-slate-700 w-full truncate">
+            {activeDepositInfo.address}
+          </span>
+          <button
+            type="button"
+            className="h-10 px-3 rounded-lg bg-slate-900 text-white text-sm font-semibold flex items-center gap-1.5 flex-shrink-0"
+            onClick={() => { navigator.clipboard.writeText(activeDepositInfo.address); setDepositToast(t("copied")); }}
+          >
+            <Icon name="copy" className="w-4 h-4" /><span>{t("copy")}</span>
+          </button>
+        </div>
+
+        <div className="w-full space-y-4 mt-4 text-left">
           <Field
             label={t("deposit_amount_with_coin", { coin: selectedDepositCoin })}
-            type="number"
-            min={0}
-            step="any"
+            type="number" min={0} step="any"
             value={depositAmount}
             onChange={e => setDepositAmount(e.target.value)}
             required
             icon="dollar-sign"
           />
           <div>
-            <label className="block text-slate-600 font-medium mb-1">{t("upload_screenshot")}</label>
+            <label className="block text-slate-600 font-medium mb-1 text-sm">{t("upload_screenshot")}</label>
             <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={e => { setDepositScreenshot(e.target.files[0]); setFileLocked(true); }}
-                required
-                className="absolute inset-0 opacity-0 z-50 cursor-pointer"
-                disabled={fileLocked}
-              />
-              <div className={`truncate w-full text-sm text-white font-semibold text-center px-4 py-2 rounded-xl ${fileLocked ? "bg-slate-400 cursor-not-allowed" : "bg-slate-900 hover:opacity-95 cursor-pointer"}`}>
+              <input type="file" accept="image/*" ref={fileInputRef} onChange={e => { setDepositScreenshot(e.target.files[0]); setFileLocked(true); }} required className="absolute inset-0 opacity-0 z-50 cursor-pointer" disabled={fileLocked} />
+              <div className={`truncate w-full text-sm font-semibold text-center px-4 py-3 rounded-xl transition-colors ${fileLocked ? "bg-slate-400 text-white cursor-not-allowed" : "bg-slate-900 text-white hover:opacity-95 cursor-pointer"}`}>
                 {fileLocked ? t("screenshot_uploaded") : t("choose_file")}
               </div>
             </div>
           </div>
-          <div className="text-sm text-slate-600 bg-slate-50 ring-1 ring-slate-200 rounded px-3 py-2">
-            {t("for_your_safety_submit_screenshot")}
-            <span className="block text-amber-600">{t("proof_ensures_support")}</span>
-          </div>
-          <div className="relative">
-            <button
-              type="submit"
-              disabled={depositBusy || !depositAmount || !depositScreenshot}
-              className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition
-                ${depositBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
-            >
-              {depositBusy ? (t("submitting") || "Submitting...") : t("submit")}
-            </button>
-            {depositToast && (
-              <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-[70]">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl shadow-2xl
-                                bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
-                  <Icon name="check" className="w-5 h-5" />
-                  <span>{depositToast}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </form>
-      </Modal>
-      <Modal visible={modal.open && modal.type === "withdraw"} onClose={closeModal}>
-        <form onSubmit={handleWithdraw} className="space-y-5 p-2">
-          <div className="text-2xl font-bold mb-3 flex items-center gap-2 text-slate-900">
-            <Icon name="upload" className="w-7 h-7" /> {t("withdraw")}
-          </div>
-          <select
-            className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
-            value={selectedWithdrawCoin}
-            onChange={e => setSelectedWithdrawCoin(e.target.value)}
+        </div>
+
+        <div className="text-xs text-slate-600 bg-slate-50 ring-1 ring-slate-200 rounded-lg px-3 py-2 mt-4 text-center w-full">
+          {t("for_your_safety_submit_screenshot")}
+          <span className="block text-amber-600 font-semibold">{t("proof_ensures_support")}</span>
+        </div>
+
+        <div className="relative w-full mt-5">
+          <button
+            type="submit"
+            disabled={depositBusy || !depositAmount || !depositScreenshot}
+            className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition ${depositBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
           >
-            {coinSymbols.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <div className="text-slate-600 font-medium">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
+            {depositBusy ? (t("submitting") || "Submitting...") : t("submit")}
+          </button>
+          {depositToast && (
+            <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 z-[70]">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-2xl bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
+                <Icon name="check" className="w-5 h-5" />
+                <span>{depositToast}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </form>
+    </Modal>
+      <Modal visible={modal.open && modal.type === "withdraw"} onClose={closeModal}>
+        <form onSubmit={handleWithdraw} className="flex flex-col p-3 text-center w-full max-w-xs mx-auto">
+          <div className="text-2xl font-bold mb-4 flex items-center gap-2 text-slate-900 self-center">
+            <Icon name="upload" className="w-7 h-7" /> {t("Withdraw", { coin: selectedWithdrawCoin })}
+          </div>
+
+          <div className="w-full space-y-4 text-left">
+            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
+
+            <Field
+              label={t("withdraw_to_address")}
+              type="text"
+              required
+              placeholder={t("paste_recipient_address", { coin: selectedWithdrawCoin })}
+              value={withdrawForm.address}
+              onChange={e => setWithdrawForm(f => ({ ...f, address: e.target.value }))}
+              icon="send"
+            />
+            <Field
+              label={t("amount_with_coin", { coin: selectedWithdrawCoin })}
+              type="number"
+              min={0.0001}
+              step="any"
+              required
+              placeholder={t("enter_amount_with_coin", { coin: selectedWithdrawCoin })}
+              value={withdrawForm.amount}
+              onChange={e => setWithdrawForm(f => ({ ...f, amount: e.target.value }))}
+              icon="dollar-sign"
+            />
+          </div>
+
+          <div className="text-xs text-amber-700 bg-amber-50 ring-1 ring-amber-200 rounded-lg px-3 py-2 mt-4 text-center w-full">
+            {t("double_check_withdraw")}
+          </div>
+
+          <div className="relative w-full mt-5">
+            <button
+              type="submit"
+              disabled={withdrawBusy || !withdrawForm.address || !withdrawForm.amount}
+              className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition ${withdrawBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
+            >
+              {withdrawBusy ? (t("submitting") || "Submitting...") : t("submit_withdraw")}
+            </button>
+            {withdrawToast && (
+              <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 z-[70]">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-2xl bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
+                  <Icon name="check" className="w-5 h-5" />
+                  <span>{withdrawToast}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </form>
+      </Modal>
+
+    {/* ===== NEW CONVERT MODAL ===== */}
+    <Modal visible={showConvertModal} onClose={() => setShowConvertModal(false)}>
+      <div className="p-2">
+        <div className="flex items-center gap-2 text-slate-800 text-2xl font-extrabold mb-4">
+          <Icon name="swap" className="w-7 h-7" /> {t("convert_crypto")}
+        </div>
+        <form onSubmit={handleConvert} className="space-y-4">
+          <div className="flex flex-col gap-4 relative">
+            <div className="relative">
+              <div className="text-sm text-slate-600 font-medium mb-1">{t("from")}</div>
+              <select
+                value={fromCoin}
+                onChange={e => {
+                  setFromCoin(e.target.value);
+                  if (e.target.value === "USDT") setToCoin("BTC"); else setToCoin("USDT");
+                }}
+                className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none transition-colors"
+              >
+                {coinSymbols.map(c => (<option key={c} value={c}>{c}</option>))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-center -my-2 z-10">
+              <button
+                type="button"
+                onClick={swap}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 text-white shadow-md hover:bg-slate-800 transition-all duration-200 ease-in-out transform hover:scale-105"
+                aria-label="Swap currencies"
+              >
+                <Icon name="swap" className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <div className="text-sm text-slate-600 font-medium mb-1">{t("to")}</div>
+              <select
+                value={toCoin}
+                onChange={e => setToCoin(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none transition-colors"
+              >
+                {fromCoin === "USDT"
+                  ? coinSymbols.filter(c => c !== "USDT").map(c => <option key={c} value={c}>{c}</option>)
+                  : <option value="USDT">USDT</option>}
+              </select>
+            </div>
+          </div>
+
           <Field
-            label={t("withdraw_to_address")}
-            type="text"
-            required
-            placeholder={t("paste_recipient_address", { coin: selectedWithdrawCoin })}
-            value={withdrawForm.address}
-            onChange={e => setWithdrawForm(f => ({ ...f, address: e.target.value }))}
-            icon="send"
-          />
-          <Field
-            label={t("amount_with_coin", { coin: selectedWithdrawCoin })}
+            label={t("amount_with_coin", { coin: fromCoin })}
             type="number"
-            min={0.0001}
+            min={0}
             step="any"
-            required
-            placeholder={t("enter_amount_with_coin", { coin: selectedWithdrawCoin })}
-            value={withdrawForm.amount}
-            onChange={e => setWithdrawForm(f => ({ ...f, amount: e.target.value }))}
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            placeholder={t("enter_amount_with_coin", { coin: fromCoin })}
             icon="dollar-sign"
           />
-          <div className="text-sm text-amber-700 bg-amber-50 ring-1 ring-amber-200 rounded px-3 py-2">{t("double_check_withdraw")}</div>
-          <div className="relative">
-            <button
-              type="submit"
-              disabled={withdrawBusy || !withdrawForm.address || !withdrawForm.amount}
-              className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition
-                ${withdrawBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
-            >
-              {withdrawBusy ? (t("submitting") || "Submitting...") : t("submit_withdraw")}
-            </button>
-            {withdrawToast && (
-              <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-[70]">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl shadow-2xl
-                                bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
-                  <Icon name="check" className="w-5 h-5" />
-                  <span>{withdrawToast}</span>
-                </div>
-              </div>
-            )}
+
+          <div className="rounded-xl bg-slate-50 ring-1 ring-slate-200 px-4 py-3 text-slate-700 font-medium">
+            {t("you_will_receive")}:&nbsp;
+            <span className="font-extrabold text-slate-900">
+              {result ? `${result} ${toCoin}` : "--"}
+            </span>
           </div>
-          {withdrawMsg && (
-            <div className="mt-2 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 rounded-lg px-4 py-2 text-center text-base font-semibold">
-              {withdrawMsg}
+
+          <button
+            type="submit"
+            className="w-full h-12 rounded-xl bg-slate-900 text-white text-lg font-extrabold hover:scale-[1.02] transition"
+            disabled={!amount || isNaN(amount) || fromCoin === toCoin || parseFloat(amount) <= 0}
+          >
+            {t("convert")}
+          </button>
+
+          {successMsg && (
+            <div className="mt-2 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 rounded-lg px-4 py-3 text-center text-base font-semibold">
+              {successMsg}
             </div>
           )}
         </form>
-      </Modal>
+      </div>
+    </Modal>
     </div>
   );
 }
