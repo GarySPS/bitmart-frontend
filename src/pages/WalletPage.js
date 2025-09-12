@@ -27,7 +27,7 @@ const coinData = [
 ];
 const coinSymbols = coinData.map(c => c.symbol); // Keep this line for other parts of the code that use the simple array
 const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ETH", SOL: "SOL", XRP: "XRP", TON: "TON" };
-const usdtNetworks = ["TRC20", "USDC ETH", "ERC20"];
+const usdtNetworks = ["TRC20", "USDC-ETH", "ERC20"];
 const fmtUSD = (n) => "$" + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /* ---------------- uploads ---------------- */
