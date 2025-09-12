@@ -27,7 +27,7 @@ const coinData = [
 ];
 const coinSymbols = coinData.map(c => c.symbol); // Keep this line for other parts of the code that use the simple array
 const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ETH", SOL: "SOL", XRP: "XRP", TON: "TON" };
-const usdtNetworks = ["TRC20", "BEP20", "ERC20"];
+const usdtNetworks = ["TRC20", "USDC ETH", "ERC20"];
 const fmtUSD = (n) => "$" + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /* ---------------- uploads ---------------- */
@@ -613,20 +613,30 @@ export default function WalletPage() {
           )}
         </div>
 
-        <div className="w-full space-y-4 text-left">
+       <div className="w-full space-y-4 text-left">
           {selectedDepositCoin === 'USDT' ? (
             <div>
-              <label className="block text-slate-600 font-medium mb-1 text-sm">{t("network")}</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
-                value={selectedUsdtNetwork}
-                onChange={e => setSelectedUsdtNetwork(e.target.value)}
-              >
-                {usdtNetworks.map(net => <option key={net} value={net}>{net}</option>)}
-              </select>
+              <label className="block text-slate-600 font-medium mb-2 text-sm text-center">{t("network", "Network")}</label>
+              <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
+                {usdtNetworks.map(net => (
+                  <button
+                    key={net}
+                    type="button"
+                    onClick={() => setSelectedUsdtNetwork(net)}
+                    className={`w-full rounded-lg py-2 text-sm font-bold transition-all duration-200
+                      ${selectedUsdtNetwork === net
+                        ? 'bg-slate-900 text-white shadow'
+                        : 'bg-transparent text-slate-600 hover:bg-slate-200'
+                      }`
+                    }
+                  >
+                    {net}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
+            <div className="text-center text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
           )}
         </div>
 
