@@ -150,7 +150,7 @@ export default function LoginPage() {
 {/* Support */}
 <div className="grid grid-cols-1 gap-2">
   <a
-    href="https://t.me/bitmartsingapore"
+    href="https://t.me/Bitmartexchangecustomerservice"
     target="_blank"
     rel="noopener noreferrer"
     className="rounded-xl px-3 py-2 text-center text-sm md:text-base font-bold text-white bg-[#229ED9] hover:bg-[#178fca] transition shadow"

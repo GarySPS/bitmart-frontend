@@ -694,7 +694,7 @@ useEffect(() => {
   <div className="grid grid-cols-1 gap-3">
     <button
       className="h-12 rounded-xl font-bold text-white bg-[#229ED9] hover:opacity-95 transition"
-      onClick={() => window.open('https://t.me/bitmartsingapore', '_blank')}
+      onClick={() => window.open('https://t.me/Bitmartexchangecustomerservice', '_blank')}
     >
       Telegram
     </button>

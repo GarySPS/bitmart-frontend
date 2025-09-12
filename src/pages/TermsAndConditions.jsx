@@ -156,7 +156,7 @@ export default function TermsAndConditions() {
   <p>
     Support:{" "}
     <a
-      href="https://t.me/bitmartsingapore"
+      href="https://t.me/Bitmartexchangecustomerservice"
       className="text-blue-400 underline"
     >
       Telegram Customer Support

@@ -174,7 +174,7 @@ return (
             rel="noreferrer"
             className="text-sky-300 underline underline-offset-2 hover:text-sky-200"
           >
-            Telegram @bitmartsingapore
+            Telegram @Bitmartexchangecustomerservice
           </a>
         </div>
       </div>
