@@ -26,7 +26,7 @@ const coinData = [
   { symbol: "TON", name: "Toncoin" },
 ];
 const coinSymbols = coinData.map(c => c.symbol); // Keep this line for other parts of the code that use the simple array
-const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ERC20", SOL: "SOL", XRP: "XRP", TON: "TON" };
+const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ETH", SOL: "SOL", XRP: "XRP", TON: "TON" };
 const usdtNetworks = ["TRC20", "BEP20", "ERC20"];
 const fmtUSD = (n) => "$" + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -672,59 +672,55 @@ export default function WalletPage() {
       </form>
     </Modal>
       <Modal visible={modal.open && modal.type === "withdraw"} onClose={closeModal}>
-        <form onSubmit={handleWithdraw} className="flex flex-col p-3 text-center w-full max-w-xs mx-auto">
-          <div className="text-2xl font-bold mb-4 flex items-center gap-2 text-slate-900 self-center">
-            <Icon name="upload" className="w-7 h-7" /> {t("Withdraw", { coin: selectedWithdrawCoin })}
-          </div>
-
-          <div className="w-full space-y-4 text-left">
-            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
-
-            <Field
-              label={t("withdraw_to_address")}
-              type="text"
-              required
-              placeholder={t("paste_recipient_address", { coin: selectedWithdrawCoin })}
-              value={withdrawForm.address}
-              onChange={e => setWithdrawForm(f => ({ ...f, address: e.target.value }))}
-              icon="send"
-            />
-            <Field
-              label={t("amount_with_coin", { coin: selectedWithdrawCoin })}
-              type="number"
-              min={0.0001}
-              step="any"
-              required
-              placeholder={t("enter_amount_with_coin", { coin: selectedWithdrawCoin })}
-              value={withdrawForm.amount}
-              onChange={e => setWithdrawForm(f => ({ ...f, amount: e.target.value }))}
-              icon="dollar-sign"
-            />
-          </div>
-
-          <div className="text-xs text-amber-700 bg-amber-50 ring-1 ring-amber-200 rounded-lg px-3 py-2 mt-4 text-center w-full">
-            {t("double_check_withdraw")}
-          </div>
-
-          <div className="relative w-full mt-5">
-            <button
-              type="submit"
-              disabled={withdrawBusy || !withdrawForm.address || !withdrawForm.amount}
-              className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition ${withdrawBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
-            >
-              {withdrawBusy ? (t("submitting") || "Submitting...") : t("submit_withdraw")}
-            </button>
-            {withdrawToast && (
-              <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 z-[70]">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-2xl bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
-                  <Icon name="check" className="w-5 h-5" />
-                  <span>{withdrawToast}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </form>
-      </Modal>
+    <form onSubmit={handleWithdraw} className="flex flex-col p-3 text-center w-full max-w-xs mx-auto">
+        <div className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 self-center">
+            <Icon name="upload" className="w-6 h-6" /> {t("Withdraw", { coin: selectedWithdrawCoin })}
+        </div>
+        <div className="w-full space-y-3 text-left">
+            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
+            <Field
+                label={t("withdraw_to_address")}
+                type="text"
+                required
+                placeholder={t("paste_recipient_address", { coin: selectedWithdrawCoin })}
+                value={withdrawForm.address}
+                onChange={e => setWithdrawForm(f => ({ ...f, address: e.target.value }))}
+                icon="send"
+            />
+            <Field
+                label={t("amount_with_coin", { coin: selectedWithdrawCoin })}
+                type="number"
+                min={0.0001}
+                step="any"
+                required
+                placeholder={t("enter_amount_with_coin", { coin: selectedWithdrawCoin })}
+                value={withdrawForm.amount}
+                onChange={e => setWithdrawForm(f => ({ ...f, amount: e.target.value }))}
+                icon="dollar-sign"
+            />
+        </div>
+        <div className="text-xs text-amber-700 bg-amber-50 ring-1 ring-amber-200 rounded-lg px-3 py-2 mt-4 text-center w-full">
+            {t("double_check_withdraw")}
+        </div>
+        <div className="relative w-full mt-4">
+            <button
+                type="submit"
+                disabled={withdrawBusy || !withdrawForm.address || !withdrawForm.amount}
+                className={`w-full h-11 rounded-xl text-white text-base font-extrabold transition ${withdrawBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
+            >
+                {withdrawBusy ? (t("submitting") || "Submitting...") : t("submit_withdraw")}
+            </button>
+            {withdrawToast && (
+                <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 z-[70]">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-2xl bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
+                        <Icon name="check" className="w-5 h-5" />
+                        <span>{withdrawToast}</span>
+                    </div>
+                </div>
+            )}
+        </div>
+    </form>
+</Modal>
 
     {/* ===== NEW CONVERT MODAL ===== */}
     <Modal visible={showConvertModal} onClose={() => setShowConvertModal(false)}>
