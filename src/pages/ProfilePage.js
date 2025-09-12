@@ -391,37 +391,37 @@ useEffect(() => {
           </Card>
 
           {/* Total Assets + Quick Actions */}
-          <Card className="p-8 md:p-10 rounded-3xl border border-white/10 bg-gradient-to-br from-white/85 to-white/60 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.20)]">
-            <div className="text-center">
-              <div className="text-slate-600 font-bold">{t('profile_total_assets')}</div>
-              <div className="mt-1 text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-                {typeof totalUsd === "number"
-                  ? `$${totalUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                  : "--"}
-              </div>
+        <Card className="p-6 md:p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/85 to-white/60 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.20)]">
+          <div className="text-center">
+            <div className="text-slate-600 font-bold">{t('profile_total_assets')}</div>
+            <div className="mt-1 text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+              {typeof totalUsd === "number"
+                ? `$${totalUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                : "--"}
             </div>
+          </div>
 
-            <div className="mt-8 grid grid-cols-1 gap-3">
-              <button 
-                className="h-12 rounded-xl font-bold bg-slate-900 text-white hover:scale-[1.02] transition flex items-center justify-center"
-                onClick={() => navigate(`/wallet?action=deposit`)}
-              >
-                {t('profile_deposit')}
-              </button>
-              <button 
-                className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition flex items-center justify-center"
-                onClick={() => navigate(`/wallet?action=withdraw`)}
-              >
-                <Icon name="arrow-up-right" className="mr-2" /> {t('profile_withdraw')}
-              </button>
-              <button 
-                className="h-12 rounded-xl font-bold bg-slate-900 text-white hover:scale-[1.02] transition flex items-center justify-center"
-                onClick={() => navigate(`/wallet?action=convert`)}
-              >
-                <Icon name="swap" className="mr-2" /> {t('profile_convert')}
-              </button>
-            </div>
-          </Card>
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <button 
+              className="h-11 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition"
+              onClick={() => navigate(`/wallet?action=deposit`)}
+            >
+              {t('profile_deposit')}
+            </button>
+            <button 
+              className="h-11 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition"
+              onClick={() => navigate(`/wallet?action=withdraw`)}
+            >
+              {t('profile_withdraw')}
+            </button>
+            <button 
+              className="h-11 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition"
+              onClick={() => navigate(`/wallet?action=convert`)}
+            >
+              {t('profile_convert')}
+            </button>
+          </div>
+        </Card>
         </div>
 
         {/* ========= 2) Chart + Assets Donut ========= */}

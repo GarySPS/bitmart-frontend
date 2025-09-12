@@ -250,15 +250,32 @@ export default function WalletPage() {
   const closeModal = () => setModal({ open: false, type: "", coin: "" });
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const action = params.get("action");
-    const coin = params.get("coin");
-    if (action === "deposit" && coin) { setSelectedDepositCoin(coin); openModal("deposit", coin); }
-    if (action === "withdraw" && coin) openModal("withdraw", coin);
-    if (action === "convert") {
-      setShowConvertModal(true); // This now opens the modal
-    }
-  }, [location, openModal]);
+    const params = new URLSearchParams(location.search);
+    const action = params.get("action");
+    const coin = params.get("coin"); // Keep for direct links if needed
+
+    // Handle navigation from ProfilePage
+    if (action === "deposit" && !coin) {
+      setShowCoinSelectionModal(true);
+    }
+    if (action === "withdraw" && !coin) {
+      setShowWithdrawCoinSelectionModal(true);
+    }
+
+    // Handle direct links that might include a coin
+    if (action === "deposit" && coin) {
+      setSelectedDepositCoin(coin);
+      openModal("deposit", coin);
+    }
+    if (action === "withdraw" && coin) {
+      setSelectedWithdrawCoin(coin);
+      openModal("withdraw", coin);
+    }
+    
+    if (action === "convert") {
+      setShowConvertModal(true);
+    }
+  }, [location, openModal]);
 
   useEffect(() => {
     if (toast) { const t = setTimeout(() => setToast(""), 1200); return () => clearTimeout(t); }
