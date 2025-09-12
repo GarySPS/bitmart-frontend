@@ -26,7 +26,7 @@ const coinData = [
   { symbol: "TON", name: "Toncoin" },
 ];
 const coinSymbols = coinData.map(c => c.symbol); // Keep this line for other parts of the code that use the simple array
-const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ETH", SOL: "SOL", XRP: "XRP", TON: "TON" };
+const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ERC20", SOL: "SOL", XRP: "XRP", TON: "TON" };
 const usdtNetworks = ["TRC20", "BEP20", "ERC20"];
 const fmtUSD = (n) => "$" + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -410,26 +410,25 @@ export default function WalletPage() {
                 </div>
 
 {/* --- Action Buttons --- */}
-<div className="mt-5 flex items-center justify-center gap-3 w-full">
+<div className="mt-5 grid grid-cols-3 gap-3 w-full max-w-xs mx-auto">
   <button
-    className="h-11 flex-1 max-w-[120px] rounded-xl bg-white ring-1 ring-slate-200 text-sm font-bold text-slate-800 hover:bg-slate-50 transition flex items-center justify-center gap-1.5"
+    className="h-11 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-bold text-slate-800 hover:bg-slate-50 transition flex flex-col items-center justify-center"
     onClick={() => setShowCoinSelectionModal(true)}
   >
-    <Icon name="download" className="w-5 h-5" />
+    <Icon name="download" className="w-5 h-5 mb-0.5" />
     <span>{t("deposit")}</span>
   </button>
   <button
-    className="h-11 flex-1 max-w-[120px] rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition flex items-center justify-center gap-1.5"
+    className="h-11 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition flex flex-col items-center justify-center"
     onClick={() => setShowWithdrawCoinSelectionModal(true)}
-  >
-    <Icon name="upload" className="w-5 h-5" />
-    <span>{t("withdraw")}</span>
-  </button>
+  >
+    <Icon name="upload" className="w-5 h-5 mb-0.5" />
+    <span>{t("withdraw")}</span>
+  </button>
   <button
-    className="h-11 flex-1 max-w-[120px] rounded-xl bg-white ring-1 ring-slate-200 text-sm font-bold text-slate-800 hover:bg-slate-50 transition flex items-center justify-center gap-1.5"
+    className="h-11 rounded-xl bg-white ring-1 ring-slate-200 text-sm font-bold text-slate-800 hover:bg-slate-50 transition flex flex-col items-center justify-center"
     onClick={() => setShowConvertModal(true)}
   >
-    <Icon name="swap" className="w-5 h-5" />
     <span>{t("convert")}</span>
   </button>
 </div>
@@ -584,94 +583,94 @@ export default function WalletPage() {
 </Modal>
 
     <Modal visible={modal.open && modal.type === "deposit"} onClose={closeModal}>
-      <form onSubmit={handleDepositSubmit} className="flex flex-col items-center p-3 text-center w-full max-w-xs mx-auto">
-        <div className="text-2xl font-bold mb-4 text-slate-900">
-          {t("deposit")}
-        </div>
-        
-        <div className="relative w-full max-w-[180px] aspect-square mb-4 rounded-2xl bg-white ring-1 ring-slate-200 flex items-center justify-center overflow-hidden p-3">
-          {activeDepositInfo.qr ? (
-            <img src={activeDepositInfo.qr} alt={t("deposit_qr")} className="max-w-full max-h-full object-contain" />
-          ) : (
-            <QRCodeCanvas value={activeDepositInfo.address || ""} size={160} bgColor="#ffffff" fgColor="#000000" />
-          )}
-        </div>
+      <form onSubmit={handleDepositSubmit} className="flex flex-col items-center p-3 text-center w-full max-w-xs mx-auto">
+        <div className="text-2xl font-bold mb-4 text-slate-900">
+          {t("deposit")}
+        </div>
+        
+        <div className="relative w-full max-w-[180px] aspect-square mb-4 rounded-2xl bg-white ring-1 ring-slate-200 flex items-center justify-center overflow-hidden p-3">
+          {activeDepositInfo.qr ? (
+            <img src={activeDepositInfo.qr} alt={t("deposit_qr")} className="max-w-full max-h-full object-contain" />
+          ) : (
+            <QRCodeCanvas value={activeDepositInfo.address || ""} size={160} bgColor="#ffffff" fgColor="#000000" />
+          )}
+        </div>
 
-        <div className="w-full space-y-4 text-left">
-          {selectedDepositCoin === 'USDT' ? (
-            <div>
-              <label className="block text-slate-600 font-medium mb-1 text-sm">{t("network")}</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
-                value={selectedUsdtNetwork}
-                onChange={e => setSelectedUsdtNetwork(e.target.value)}
-              >
-                {usdtNetworks.map(net => <option key={net} value={net}>{net}</option>)}
-              </select>
-            </div>
-          ) : (
-            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
-          )}
-        </div>
+        <div className="w-full space-y-4 text-left">
+          {selectedDepositCoin === 'USDT' ? (
+            <div>
+              <label className="block text-slate-600 font-medium mb-1 text-sm">{t("network")}</label>
+              <select
+                className="w-full px-4 py-3 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-sky-200 outline-none"
+                value={selectedUsdtNetwork}
+                onChange={e => setSelectedUsdtNetwork(e.target.value)}
+              >
+                {usdtNetworks.map(net => <option key={net} value={net}>{net}</option>)}
+              </select>
+            </div>
+          ) : (
+            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedDepositCoin]}</span></div>
+          )}
+        </div>
 
-        <div className="text-slate-600 font-medium text-sm mt-4">{t("deposit_address", "Deposit Address")}</div>
-        <div className="flex items-center gap-2 justify-center mt-1 w-full">
-          <span className="font-mono bg-slate-100 ring-1 ring-slate-200 px-3 py-2 rounded-lg text-sm text-slate-700 w-full truncate">
-            {activeDepositInfo.address}
-          </span>
-          <button
-            type="button"
-            className="h-10 px-3 rounded-lg bg-slate-900 text-white text-sm font-semibold flex items-center gap-1.5 flex-shrink-0"
-            onClick={() => { navigator.clipboard.writeText(activeDepositInfo.address); setDepositToast(t("copied")); }}
-          >
-            <Icon name="copy" className="w-4 h-4" /><span>{t("copy")}</span>
-          </button>
-        </div>
+        <div className="text-slate-600 font-medium text-sm mt-4">{t("deposit_address", "Deposit Address")}</div>
+        <div className="flex items-center gap-2 justify-center mt-1 w-full">
+          <span className="font-mono bg-slate-100 ring-1 ring-slate-200 px-3 py-2 rounded-lg text-sm text-slate-700 w-full truncate">
+            {activeDepositInfo.address}
+          </span>
+          <button
+            type="button"
+            className="h-10 px-3 rounded-lg bg-slate-900 text-white text-sm font-semibold flex items-center gap-1.5 flex-shrink-0"
+            onClick={() => { navigator.clipboard.writeText(activeDepositInfo.address); setDepositToast(t("copied")); }}
+          >
+            <Icon name="copy" className="w-4 h-4" /><span>{t("copy")}</span>
+          </button>
+        </div>
 
-        <div className="w-full space-y-4 mt-4 text-left">
-          <Field
-            label={t("deposit_amount_with_coin", { coin: selectedDepositCoin })}
-            type="number" min={0} step="any"
-            value={depositAmount}
-            onChange={e => setDepositAmount(e.target.value)}
-            required
-            icon="dollar-sign"
-          />
-          <div>
-            <label className="block text-slate-600 font-medium mb-1 text-sm">{t("upload_screenshot")}</label>
-            <div className="relative">
-              <input type="file" accept="image/*" ref={fileInputRef} onChange={e => { setDepositScreenshot(e.target.files[0]); setFileLocked(true); }} required className="absolute inset-0 opacity-0 z-50 cursor-pointer" disabled={fileLocked} />
-              <div className={`truncate w-full text-sm font-semibold text-center px-4 py-3 rounded-xl transition-colors ${fileLocked ? "bg-slate-400 text-white cursor-not-allowed" : "bg-slate-900 text-white hover:opacity-95 cursor-pointer"}`}>
-                {fileLocked ? t("screenshot_uploaded") : t("choose_file")}
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className="w-full space-y-4 mt-4 text-left">
+          <Field
+            label={t("deposit_amount_with_coin", { coin: selectedDepositCoin })}
+            type="number" min={0} step="any"
+            value={depositAmount}
+            onChange={e => setDepositAmount(e.target.value)}
+            required
+            icon="dollar-sign"
+          />
+          <div>
+            <label className="block text-slate-600 font-medium mb-1 text-sm">{t("upload_screenshot")}</label>
+            <div className="relative">
+              <input type="file" accept="image/*" ref={fileInputRef} onChange={e => { setDepositScreenshot(e.target.files[0]); setFileLocked(true); }} required className="absolute inset-0 opacity-0 z-50 cursor-pointer" disabled={fileLocked} />
+              <div className={`truncate w-full text-sm font-semibold text-center px-4 py-3 rounded-xl transition-colors ${fileLocked ? "bg-slate-400 text-white cursor-not-allowed" : "bg-slate-900 text-white hover:opacity-95 cursor-pointer"}`}>
+                {fileLocked ? t("screenshot_uploaded") : t("choose_file")}
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div className="text-xs text-slate-600 bg-slate-50 ring-1 ring-slate-200 rounded-lg px-3 py-2 mt-4 text-center w-full">
-          {t("for_your_safety_submit_screenshot")}
-          <span className="block text-amber-600 font-semibold">{t("proof_ensures_support")}</span>
-        </div>
+        <div className="text-xs text-slate-600 bg-slate-50 ring-1 ring-slate-200 rounded-lg px-3 py-2 mt-4 text-center w-full">
+          {t("for_your_safety_submit_screenshot")}
+          <span className="block text-amber-600 font-semibold">{t("proof_ensures_support")}</span>
+        </div>
 
-        <div className="relative w-full mt-5">
-          <button
-            type="submit"
-            disabled={depositBusy || !depositAmount || !depositScreenshot}
-            className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition ${depositBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
-          >
-            {depositBusy ? (t("submitting") || "Submitting...") : t("submit")}
-          </button>
-          {depositToast && (
-            <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 z-[70]">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-2xl bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
-                <Icon name="check" className="w-5 h-5" />
-                <span>{depositToast}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </form>
-    </Modal>
+        <div className="relative w-full mt-5">
+          <button
+            type="submit"
+            disabled={depositBusy || !depositAmount || !depositScreenshot}
+            className={`w-full h-12 rounded-xl text-white text-lg font-extrabold transition ${depositBusy ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:scale-[1.02]"}`}
+          >
+            {depositBusy ? (t("submitting") || "Submitting...") : t("submit")}
+          </button>
+          {depositToast && (
+            <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 z-[70]">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-2xl bg-slate-900/95 backdrop-blur text-white font-semibold ring-1 ring-white/15">
+                <Icon name="check" className="w-5 h-5" />
+                <span>{depositToast}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </form>
+    </Modal>
       <Modal visible={modal.open && modal.type === "withdraw"} onClose={closeModal}>
         <form onSubmit={handleWithdraw} className="flex flex-col p-3 text-center w-full max-w-xs mx-auto">
           <div className="text-2xl font-bold mb-4 flex items-center gap-2 text-slate-900 self-center">
