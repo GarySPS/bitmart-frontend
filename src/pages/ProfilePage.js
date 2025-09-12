@@ -402,18 +402,20 @@ useEffect(() => {
             </div>
 
             <div className="mt-8 grid grid-cols-1 gap-3">
-              <button 
-                className="h-12 rounded-xl font-bold bg-slate-900 text-white hover:scale-[1.02] transition flex items-center justify-center"
-                onClick={() => navigate(`/wallet?action=deposit&coin=USDT`)}
-              >
-                {t('profile_deposit')}
-              </button>
-              <button 
-                className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition flex items-center justify-center"
-                onClick={() => navigate(`/wallet?action=withdraw&coin=BTC`)}
-              >
-                <Icon name="arrow-up-right" className="mr-2" /> {t('profile_withdraw')}
-              </button>
+<button 
+  className="h-12 rounded-xl font-bold bg-slate-900 text-white hover:scale-[1.02] transition flex items-center justify-center"
+  onClick={() => navigate(`/wallet?action=deposit`)}
+>
+  {t('profile_deposit')}
+</button>
+
+<button 
+  className="h-12 rounded-xl font-bold bg-white ring-1 ring-slate-200 text-slate-800 hover:bg-slate-50 transition flex items-center justify-center"
+  onClick={() => navigate(`/wallet?action=withdraw`)}
+>
+  <Icon name="arrow-up-right" className="mr-2" /> {t('profile_withdraw')}
+</button>
+
               <button 
                 className="h-12 rounded-xl font-bold bg-slate-900 text-white hover:scale-[1.02] transition flex items-center justify-center"
                 onClick={() => navigate(`/wallet?action=convert`)}
