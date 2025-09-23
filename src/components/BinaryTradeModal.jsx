@@ -8,11 +8,12 @@ export default function BinaryTradeModal({ direction, onClose, onConfirm, balanc
   // NEW: Added profit percentage to each duration
 
 const durations = [
-  { seconds: 15, profit: 30 },
-  { seconds: 30, profit: 50 },
-  { seconds: 60, profit: 70 },
+  { seconds: 30, profit: 30 },
+  { seconds: 60, profit: 50 },
+  { seconds: 90, profit: 70 },
   { seconds: 120, profit: 100 },
 ];
+
   const quickAmounts = [25, 50, 100, 250, 500];
 
   const handleConfirm = () => {
