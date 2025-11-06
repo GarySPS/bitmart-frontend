@@ -720,29 +720,30 @@ export default function WalletPage() {
         </div>
         <div className="w-full space-y-4 text-left">
           {selectedWithdrawCoin === 'USDT' ? (
-            <div>
-              <label className="block text-slate-600 font-medium mb-2 text-sm text-center">{t("network", "Network")}</label>
-              <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
-                {usdtNetworks.map(net => (
-                  <button
-                    key={net}
-                    type="button"
-                    onClick={() => setSelectedWithdrawNetwork(net)}
-                    className={`w-full rounded-lg py-2 text-sm font-bold whitespace-nowrap transition-all duration-200
-                      ${selectedWithdrawNetwork === net
-                      ? 'bg-slate-900 text-white shadow'
-                        : 'bg-transparent text-slate-600 hover:bg-slate-200'
-                      }`
-                    }
-                  >
-                    {net}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
-          )}
+  <div>
+    <label className="block text-slate-600 font-medium mb-2 text-sm text-center">{t("network", "Network")}</label>
+    <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
+      {usdtNetworks.map(net => (
+        <button
+          key={net}
+          type="button"
+          onClick={() => setSelectedWithdrawNetwork(net)}
+          className={`w-full rounded-lg py-2 text-xs font-bold transition-all duration-200 truncate px-1
+            ${selectedWithdrawNetwork === net
+              ? 'bg-slate-900 text-white shadow'
+              : 'bg-transparent text-slate-600 hover:bg-slate-200'
+            }`
+          }
+          title={net} // Show full name on hover
+        >
+          {net}
+        </button>
+      ))}
+    </div>
+  </div>
+) : (
+  <div className="text-center text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
+)}
           <Field
                 label={t("withdraw_to_address")}
                 type="text"
