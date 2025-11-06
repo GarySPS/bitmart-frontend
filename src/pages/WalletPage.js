@@ -638,7 +638,7 @@ export default function WalletPage() {
                     key={net}
                     type="button"
                     onClick={() => setSelectedUsdtNetwork(net)}
-                    className={`w-full rounded-lg py-2 text-sm font-bold transition-all duration-200
+                    className={`w-full rounded-lg py-2 text-sm font-bold whitespace-nowrap transition-all duration-200
                       ${selectedUsdtNetwork === net
                         ? 'bg-slate-900 text-white shadow'
                         : 'bg-transparent text-slate-600 hover:bg-slate-200'
@@ -728,7 +728,7 @@ export default function WalletPage() {
                       key={net}
                       type="button"
                       onClick={() => setSelectedWithdrawNetwork(net)}
-                      className={`w-full rounded-lg py-2 text-sm font-bold transition-all duration-200
+                      className={`w-full rounded-lg py-2 text-sm font-bold whitespace-nowrap transition-all duration-200
                         ${selectedWithdrawNetwork === net
                           ? 'bg-slate-900 text-white shadow'
                           : 'bg-transparent text-slate-600 hover:bg-slate-200'
