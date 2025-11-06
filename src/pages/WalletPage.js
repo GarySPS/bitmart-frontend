@@ -1,3 +1,4 @@
+//src>pages>WalletPage.js
 import { MAIN_API_BASE, ADMIN_API_BASE } from '../config';
 import { jwtDecode } from "jwt-decode";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -70,7 +71,8 @@ export default function WalletPage() {
   const [depositInfo, setDepositInfo] = useState({});
   const [fileLocked, setFileLocked] = useState(false);
   const [selectedUsdtNetwork, setSelectedUsdtNetwork] = useState("TRC20");
-  const [authChecked, setAuthChecked] = useState(false);
+  const [selectedWithdrawNetwork, setSelectedWithdrawNetwork] = useState("TRC20");
+  const [authChecked, setAuthChecked] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [totalUsd, setTotalUsd] = useState(0);
   const [depositBusy, setDepositBusy] = useState(false);
@@ -340,33 +342,46 @@ export default function WalletPage() {
   };
   
   const handleWithdraw = async (e) => {
-    e.preventDefault();
-    if (withdrawBusy) return;
-    setWithdrawBusy(true);
-    try {
-      const res = await axios.post(`${MAIN_API_BASE}/withdraw`, {
-        user_id: userId,
-        coin: selectedWithdrawCoin,
-        amount: withdrawForm.amount,
-        address: withdrawForm.address,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+    e.preventDefault();
+    if (withdrawBusy) return;
+    setWithdrawBusy(true);
 
-      if (res.data && res.data.success) {
-        setWithdrawToast(t("Withdraw Submitted") || "Withdraw Submitted");
-        axios.get(`${MAIN_API_BASE}/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
-          .then(r => setWithdrawHistory(r.data));
-        fetchBalances();
-      } else {
-        setWithdrawToast(t("withdraw_failed"));
-      }
-    } catch (err) {
-      setWithdrawToast(err.response?.data?.error || t("withdraw_failed"));
-      console.error(err);
-    } finally {
-      setTimeout(() => { setWithdrawForm({ address: "", amount: "" }); setWithdrawToast(""); closeModal(); }, 1400);
-      setWithdrawBusy(false);
-    }
-  };
+    // Determine the selected network
+    const network = selectedWithdrawCoin === 'USDT' 
+      ? selectedWithdrawNetwork 
+      : depositNetworks[selectedWithdrawCoin];
+
+    try {
+      const res = await axios.post(`${MAIN_API_BASE}/withdraw`, {
+        user_id: userId,
+        coin: selectedWithdrawCoin,
+        amount: withdrawForm.amount,
+        address: withdrawForm.address,
+        network: network, // Send the network to the backend
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      if (res.data && res.data.success) {
+        setWithdrawToast(t("Withdraw Submitted") || "Withdraw Submitted");
+        axios.get(`${MAIN_API_BASE}/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => setWithdrawHistory(r.data));
+        fetchBalances();
+      } else {
+        setWithdrawToast(t("withdraw_failed"));
+      }
+    } catch (err) {
+      setWithdrawToast(err.response?.data?.error || t("withdraw_failed"));
+      console.error(err);
+    } finally {
+      // Reset the form and the new network state
+      setTimeout(() => { 
+        setWithdrawForm({ address: "", amount: "" }); 
+        setSelectedWithdrawNetwork("TRC20"); // Reset network
+        setWithdrawToast(""); 
+        closeModal(); 
+      }, 1400);
+      setWithdrawBusy(false);
+    }
+  };
 
   const swap = () => { setFromCoin(toCoin); setToCoin(fromCoin); setAmount(""); setResult(""); };
 
@@ -704,9 +719,32 @@ export default function WalletPage() {
             <Icon name="upload" className="w-6 h-6" /> {t("Withdraw", { coin: selectedWithdrawCoin })}
         </div>
         <div className="w-full space-y-3 text-left">
-            <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
-            <Field
-                label={t("withdraw_to_address")}
+            {selectedWithdrawCoin === 'USDT' ? (
+              <div>
+                <label className="block text-slate-600 font-medium mb-2 text-sm text-center">{t("network", "Network")}</label>
+                <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
+                  {usdtNetworks.map(net => (
+                    <button
+                      key={net}
+                      type="button"
+                      onClick={() => setSelectedWithdrawNetwork(net)}
+                      className={`w-full rounded-lg py-2 text-sm font-bold transition-all duration-200
+                        ${selectedWithdrawNetwork === net
+                          ? 'bg-slate-900 text-white shadow'
+                          : 'bg-transparent text-slate-600 hover:bg-slate-200'
+                        }`
+                      }
+                    >
+                        {net}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-slate-600 font-medium text-sm">{t("network")}: <span className="font-semibold text-slate-900">{depositNetworks[selectedWithdrawCoin]}</span></div>
+            )}
+            <Field
+                label={t("withdraw_to_address")}
                 type="text"
                 required
                 placeholder={t("paste_recipient_address", { coin: selectedWithdrawCoin })}
