@@ -19,15 +19,23 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------------- helpers (UI only) ---------------- */
 const coinData = [
-  { symbol: "USDT", name: "Tether" },
-  { symbol: "BTC", name: "Bitcoin" },
-  { symbol: "ETH", name: "Ethereum" },
-  { symbol: "SOL", name: "Solana" },
-  { symbol: "XRP", name: "Ripple" },
-  { symbol: "TON", name: "Toncoin" },
+  { symbol: "USDT", name: "Tether" },
+  { symbol: "BTC", name: "Bitcoin" },
+  { symbol: "ETH", name: "Ethereum" },
+  { symbol: "SOL", name: "Solana" },
+  { symbol: "XRP", name: "Ripple" },
+  { symbol: "TON", name: "Toncoin" },
+];
+const withdrawCoinData = [
+  { symbol: "USDT", name: "Tether" },
+  { symbol: "BTC", name: "Bitcoin" },
+  { symbol: "ETH", name: "Ethereum" },
+  { symbol: "SOL", name: "Solana" },
+  { symbol: "XRP", name: "Ripple" },
+  { symbol: "USDC", name: "USDC (ERC)" },
 ];
 const coinSymbols = coinData.map(c => c.symbol); // Keep this line for other parts of the code that use the simple array
-const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ETH", SOL: "SOL", XRP: "XRP", TON: "TON" };
+const depositNetworks = { USDT: "TRC20", BTC: "BTC", ETH: "ETH", SOL: "SOL", XRP: "XRP", TON: "TON", USDC: "USDC (ERC)" };
 const usdtNetworks = ["TRC20", "USDC-ETH", "ERC20"];
 const fmtUSD = (n) => "$" + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -587,13 +595,13 @@ export default function WalletPage() {
     </Modal>
 
 <Modal visible={showWithdrawCoinSelectionModal} onClose={() => setShowWithdrawCoinSelectionModal(false)}>
-  <div className="p-1 w-full max-w-sm">
-    <h3 className="text-xl font-bold my-3 text-slate-900 text-center">
-      {t('select_coin_to_withdraw', 'Select Coin to Withdraw')}
-    </h3>
-    <div className="flex flex-col">
-      {coinData.map(({ symbol, name }) => (
-        <button
+  <div className="p-1 w-full max-w-sm">
+    <h3 className="text-xl font-bold my-3 text-slate-900 text-center">
+      {t('select_coin_to_withdraw', 'Select Coin to Withdraw')}
+    </h3>
+    <div className="flex flex-col">
+      {withdrawCoinData.map(({ symbol, name }) => (
+        <button
           key={symbol}
           onClick={() => {
             setSelectedWithdrawCoin(symbol);
